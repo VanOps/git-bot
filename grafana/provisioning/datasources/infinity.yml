@@ -8,10 +8,6 @@ datasources:
     isDefault: true
     editable: false
     jsonData:
-      # Prefijo base; las queries añaden la ruta específica
-      global_queries:
-        - name: DORA Summary
-          id: dora-summary
-          url: http://probot:3000/metrics/dora/summary
-          method: GET
-          type: json
+      # Hosts permitidos (obligatorio en Infinity v2.x para requests en modo proxy)
+      allowedHosts:
+        - http://probot:3000
