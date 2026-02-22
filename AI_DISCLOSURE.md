@@ -1,8 +1,8 @@
 # AI Content Disclosure (EU AI Act Art.50)
 
-**Last Updated**: 2026-02-22T08:35:25Z
-**Commit**: fb8895a1cf44cc50b47a542fb2af9a21ec3d4cc2
-**Workflow Run**: 22273741824
+**Last Updated**: 2026-02-22T08:43:31Z
+**Commit**: d3a208cb42494667715831651abf12f8ad1a0939
+**Workflow Run**: 22273856985
 
 ## Purpose
 This repository uses AI-assisted code generation for development and maintenance tasks.
@@ -12,9 +12,9 @@ transparency in AI-generated content.
 ## Recent Changes (Last Commit)
 ### Modified files with potential AI assistance:
 
-**Commit Message**: include workflow
-
-- .github/workflows/ci.yml
+- README.md
+- git-bot/README.md
+- persistencia.md
 
 ## Repository Overview
 
@@ -23,7 +23,7 @@ transparency in AI-generated content.
 - `.yaml` files: 2
 - `.yml` files: 3
 - `.json` files: 4
-- `.md` files: 7
+- `.md` files: 6
 
 ## Compliance Notes
 
