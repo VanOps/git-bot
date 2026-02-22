@@ -300,19 +300,37 @@ docker compose up --build
 graph LR
     subgraph docker-compose
         M["mongo:7\n:27017\nvolumen persistente"]
-        P["probot app\n:3000\ndepends_on: mongo healthy"]
+        P["probot app\n:3000"]
+        G["grafana:11\n:3001"]
         P -- "DATABASE_URL" --> M
+        G -- "GET /metrics/dora/*" --> P
     end
-    HOST["localhost"] -- ":3000" --> P
-    HOST -- ":27017" --> M
+    HOST["localhost"] -- ":3000 webhook" --> P
+    HOST -- ":3001 dashboard" --> G
+    HOST -- ":27017 mongosh" --> M
 ```
 
-| Servicio | Imagen              | Puerto | Volumen                          |
-| -------- | ------------------- | ------ | -------------------------------- |
-| `mongo`  | `mongo:7`           | 27017  | `mongo_data:/data/db`            |
-| `probot` | `./git-bot` (build) | 3000   | `./git-bot/private-key.pem` (ro) |
+| Servicio  | Imagen                  | Puerto | Volumen                             |
+| --------- | ----------------------- | ------ | ----------------------------------- |
+| `mongo`   | `mongo:7`               | 27017  | `mongo_data:/data/db`               |
+| `probot`  | `./git-bot` (build)     | 3000   | `./git-bot/private-key.pem` (ro)    |
+| `grafana` | `grafana/grafana-oss:11.4` | 3001  | `grafana_data:/var/lib/grafana`     |
 
-El servicio `probot` arranca solo cuando `mongo` supera su healthcheck (`db.adminCommand('ping')`).
+El servicio `probot` arranca solo cuando `mongo` supera su healthcheck. Grafana arranca después de `probot` y consulta su API `/metrics/dora/*` vía el plugin **Infinity** (OSS, sin licencia Enterprise).
+
+### Grafana
+
+Abre **http://localhost:3001** · usuario `admin` · password en `GRAFANA_PASSWORD` (default: `admin`).
+
+El dashboard **DORA Metrics – git-bot** se provisiona automáticamente con:
+- 4 paneles KPI en la cabecera (stat + gauge) con colores DORA Elite/High/Medium/Low
+- Tablas detalladas por repo (Deployment Freq, Lead Time, CFR, MTTR, PR Lifetime, Failed Jobs)
+- Variable `$days` (7 / 30 / 60 / 90 / 180 días) para cambiar la ventana temporal
+
+```bash
+# Solo Grafana (si ya tienes probot+mongo corriendo)
+docker compose up grafana -d
+```
 
 ---
 
@@ -355,6 +373,8 @@ El servicio `probot` arranca solo cuando `mongo` supera su healthcheck (`db.admi
 | `INCIDENT_LABEL`                   | No        | `incident`                                 | Label que abre un incident          |
 | `LOG_LEVEL`                        | No        | `info`                                     | `trace` · `debug` · `info` · `warn` |
 | `NODE_ENV`                         | No        | —                                          | `production` en Docker              |
+| `GRAFANA_USER`                     | No        | `admin`                                    | Usuario admin de Grafana            |
+| `GRAFANA_PASSWORD`                 | No        | `admin`                                    | Password admin de Grafana           |
 
 ---
 

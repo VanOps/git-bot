@@ -5,14 +5,19 @@ import { connectDB }                  from './src/db.js';
 import { registerCheckHandlers }       from './src/handlers/check.js';
 import { registerPullRequestHandlers } from './src/handlers/pullRequest.js';
 import { registerIncidentHandlers }    from './src/handlers/incident.js';
+import { registerMetricsRoutes }       from './src/api/metrics.js';
 
 /**
  * Main Probot app.
  * @param {import('probot').Probot} app
+ * @param {{ getRouter: Function }} options
  */
-export default async (app) => {
+export default async (app, { getRouter }) => {
   // ── MongoDB (non-fatal: app runs without persistence if Mongo is down) ──
   await connectDB(app.log);
+
+  // ── DORA metrics HTTP API (for Grafana Infinity datasource) ─────────────
+  registerMetricsRoutes(getRouter, app.log);
 
   // ── Event handlers ──────────────────────────────────────────────────────
   registerCheckHandlers(app);
