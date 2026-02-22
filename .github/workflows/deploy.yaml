@@ -1,0 +1,36 @@
+name: cd – git-bot
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "git-bot/**"
+      - "docker-compose.yml"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "git-bot/**"
+      - "docker-compose.yml"
+      - ".github/workflows/ci.yml"
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── 1. Unit tests ────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node: ["20", "22"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: echo "Deploy step placeholder - implement deployment logic here"

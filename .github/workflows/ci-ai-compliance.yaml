@@ -1,4 +1,4 @@
-name: AI Compliance Scan
+name: ai Compliance Scan
 
 on:
   push:

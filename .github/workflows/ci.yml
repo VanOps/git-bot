@@ -1,4 +1,4 @@
-name: CI – git-bot
+name: ci – git-bot
 
 on:
   push:
@@ -62,7 +62,7 @@ jobs:
         run: npm test
         env:
           DATABASE_URL: mongodb://localhost:27017/probot_test
-          LOG_LEVEL: warn   # keep test output clean
+          LOG_LEVEL: warn # keep test output clean
           # Probot requires these even for unit tests
           APP_ID: "123"
           WEBHOOK_SECRET: "test"
