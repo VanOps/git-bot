@@ -1,56 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_INFINITY",
-      "label": "Infinity – DORA API",
-      "type": "datasource",
-      "pluginId": "yesoreyeram-infinity-datasource"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "11.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "yesoreyeram-infinity-datasource",
-      "name": "Infinity",
-      "version": "2.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "stat",
-      "name": "Stat",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "gauge",
-      "name": "Gauge",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "table",
-      "name": "Table",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "barchart",
-      "name": "Bar chart",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": []
   },
@@ -196,7 +144,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/summary?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -236,7 +183,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -304,7 +255,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/summary?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -314,7 +264,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -384,7 +338,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/summary?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -394,7 +347,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -462,7 +419,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/summary?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -472,7 +428,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -529,7 +489,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/deployment-frequency?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -549,7 +508,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -629,7 +592,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/deployment-frequency?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -654,7 +616,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -733,7 +699,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/lead-time?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -763,7 +728,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -834,7 +803,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/change-failure-rate?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -859,7 +827,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -938,7 +910,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/time-to-restore?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -968,7 +939,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -1002,7 +977,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/pr-lifetime?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -1032,7 +1006,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     },
@@ -1100,7 +1078,6 @@
           "type": "json",
           "source": "url",
           "url": "http://probot:3000/metrics/dora/failed-jobs?days=${days}",
-          "method": "GET",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -1120,7 +1097,11 @@
               "type": "number"
             }
           ],
-          "parser": "backend"
+          "parser": "backend",
+          "url_options": {
+            "method": "GET",
+            "data": ""
+          }
         }
       ]
     }
