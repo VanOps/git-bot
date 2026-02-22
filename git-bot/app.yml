@@ -18,6 +18,7 @@ default_events:
   - workflow_run
   - workflow_job
   - pull_request
+  - issues
 # - commit_comment
 # - create
 # - delete

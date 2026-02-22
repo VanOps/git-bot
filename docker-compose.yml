@@ -1,0 +1,42 @@
+services:
+  # ── MongoDB ─────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: probot_mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Probot App ───────────────────────────────────────────────────────────────
+  probot:
+    build:
+      context: ./git-bot
+      dockerfile: Dockerfile
+    container_name: probot_app
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./git-bot/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mongodb://mongo:27017/probot_metrics
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # Mount your private key without baking it into the image
+    volumes:
+      - ./git-bot/private-key.pem:/usr/src/app/private-key.pem:ro
+
+volumes:
+  mongo_data:
+    driver: local
