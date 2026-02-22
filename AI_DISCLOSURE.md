@@ -1,8 +1,8 @@
 # AI Content Disclosure (EU AI Act Art.50)
 
-**Last Updated**: 2026-02-22T08:49:56Z
-**Commit**: d0eb3a8980c36098150ee402a26a5193d059b917
-**Workflow Run**: 22273945293
+**Last Updated**: 2026-02-22T14:04:17Z
+**Commit**: b47df8b4e8bc5b1063542f7f7303bef1eff83138
+**Workflow Run**: 22278627287
 
 ## Purpose
 This repository uses AI-assisted code generation for development and maintenance tasks.
@@ -12,22 +12,21 @@ transparency in AI-generated content.
 ## Recent Changes (Last Commit)
 ### Modified files with potential AI assistance:
 
-- README.md
-- docker-compose.yml
-- git-bot/index.js
-- git-bot/src/api/metrics.js
-- grafana/dashboards/dora.json
-- grafana/provisioning/dashboards/provider.yml
-- grafana/provisioning/datasources/infinity.yml
+- .github/workflows/ai-disclosure.yaml
+- .github/workflows/ci-ai-compliance.yaml
+- .github/workflows/ci.yml
+- .github/workflows/deploy.yaml
+- docs/dora-metrics.md
+- git-bot/package.json
 
 ## Repository Overview
 
 ### All code files in repository:
 - `.js` files: 13
-- `.yaml` files: 2
+- `.yaml` files: 3
 - `.yml` files: 5
 - `.json` files: 5
-- `.md` files: 6
+- `.md` files: 7
 
 ## Compliance Notes
 
