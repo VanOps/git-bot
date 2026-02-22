@@ -1,8 +1,8 @@
 # AI Content Disclosure (EU AI Act Art.50)
 
-**Last Updated**: 2026-02-22T14:13:20Z
-**Commit**: 376d61dcb37d7ac400ff7c7c9daffd8a74d88279
-**Workflow Run**: 22278772555
+**Last Updated**: 2026-02-22T14:21:55Z
+**Commit**: 1a85252f8dd41d140b00850b67c22c207f17c5c0
+**Workflow Run**: 22278903711
 
 ## Purpose
 This repository uses AI-assisted code generation for development and maintenance tasks.
@@ -12,7 +12,8 @@ transparency in AI-generated content.
 ## Recent Changes (Last Commit)
 ### Modified files with potential AI assistance:
 
-- .github/workflows/deploy.yaml
+- docs/dora-metrics.md
+- git-bot/src/handlers/check.js
 
 ## Repository Overview
 
