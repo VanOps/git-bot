@@ -21,7 +21,7 @@ concurrency:
 jobs:
   # ── 1. Unit tests ────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy (Node ${{ matrix.node }})
+    name: deploy (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
 
     strategy:
