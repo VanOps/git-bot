@@ -65,6 +65,8 @@ export function registerCheckHandlers(app) {
     }
 
     // ── DORA: upsert suite ──
+    // Nota: workflow_name se asigna en workflow_run.completed (check_suite.app.name
+    // siempre es "GitHub Actions", no el nombre real del workflow).
     await safeUpsert(
       CheckSuite,
       { suite_id: check_suite.id },
@@ -77,7 +79,6 @@ export function registerCheckHandlers(app) {
         conclusion:      check_suite.conclusion,
         head_sha:        check_suite.head_sha,
         head_branch:     check_suite.head_branch,
-        workflow_name:   check_suite.app?.name,
         pr_numbers:      check_suite.pull_requests?.map((pr) => pr.number) ?? [],
         started_at:      startTime,
       },
@@ -99,17 +100,18 @@ export function registerCheckHandlers(app) {
       '[check] check_suite.completed',
     );
 
-    const completedAt  = new Date(check_suite.updated_at ?? Date.now());
-    const existing     = await CheckSuite.findOne({ suite_id: check_suite.id }).lean().catch(() => null);
-    const startedAt    = existing?.started_at ?? new Date(check_suite.created_at ?? completedAt);
-    const duration_ms  = calcDurationMs(startedAt, completedAt);
-    const workflowName = check_suite.app?.name ?? existing?.workflow_name;
-    const is_deploy    = isDeployWorkflow(workflowName ?? '');
-    const pr_numbers   = check_suite.pull_requests?.map((pr) => pr.number)
+    // Nota: workflow_name e is_deploy se fijan en workflow_run.completed,
+    // donde tenemos el nombre real del workflow. Aquí solo actualizamos
+    // status/conclusion/duration para que CFR funcione con todos los suites.
+    const completedAt = new Date(check_suite.updated_at ?? Date.now());
+    const existing    = await CheckSuite.findOne({ suite_id: check_suite.id }).lean().catch(() => null);
+    const startedAt   = existing?.started_at ?? new Date(check_suite.created_at ?? completedAt);
+    const duration_ms = calcDurationMs(startedAt, completedAt);
+    const pr_numbers  = check_suite.pull_requests?.map((pr) => pr.number)
       ?? existing?.pr_numbers
       ?? [];
 
-    const suite = await safeUpsert(
+    await safeUpsert(
       CheckSuite,
       { suite_id: check_suite.id },
       {
@@ -121,10 +123,8 @@ export function registerCheckHandlers(app) {
         conclusion:      check_suite.conclusion,
         head_sha:        check_suite.head_sha,
         head_branch:     check_suite.head_branch,
-        workflow_name:   workflowName,
         pr_numbers,
         duration_ms,
-        is_deploy,
         completed_at:    completedAt,
       },
       app.log,
@@ -133,32 +133,71 @@ export function registerCheckHandlers(app) {
 
     app.log.info(
       `[check] suite.completed suite=${check_suite.id} conclusion=${check_suite.conclusion} ` +
-      `duration=${duration_ms}ms deploy=${is_deploy}`,
+      `duration=${duration_ms}ms`,
+    );
+  });
+
+  // ─── workflow_run.completed ────────────────────────────────────────────────
+  // Única fuente fiable del nombre real del workflow (workflow_run.name).
+  // check_suite.app.name siempre devuelve "GitHub Actions" y no sirve para
+  // detectar deploys. Aquí actualizamos workflow_name + is_deploy en el
+  // CheckSuite y creamos el Deployment cuando corresponde.
+  app.on('workflow_run.completed', async (context) => {
+    const { workflow_run, repository, installation } = context.payload;
+
+    const workflowName = workflow_run.name;
+    const is_deploy    = isDeployWorkflow(workflowName ?? '');
+    const completedAt  = new Date(workflow_run.updated_at ?? Date.now());
+    const startedAt    = new Date(workflow_run.run_started_at ?? workflow_run.created_at ?? completedAt);
+    const duration_ms  = calcDurationMs(startedAt, completedAt);
+
+    app.log.debug(
+      { run_id: workflow_run.id, name: workflowName, conclusion: workflow_run.conclusion, is_deploy },
+      '[check] workflow_run.completed',
     );
 
-    // ── DORA: record Deployment when a deploy workflow succeeds ──
+    // ── Fijar workflow_name e is_deploy en el CheckSuite asociado ──
+    await safeUpsert(
+      CheckSuite,
+      { suite_id: workflow_run.check_suite_id },
+      {
+        workflow_name: workflowName,
+        is_deploy,
+        duration_ms,
+        completed_at:  completedAt,
+      },
+      app.log,
+      `CheckSuite.workflow_name ${workflow_run.check_suite_id}`,
+    );
+
+    app.log.info(
+      `[check] workflow_run.completed run=${workflow_run.id} name="${workflowName}" ` +
+      `conclusion=${workflow_run.conclusion} deploy=${is_deploy}`,
+    );
+
+    // ── DORA: registrar Deployment si es un workflow de deploy ──
     if (is_deploy) {
       await safeUpsert(
         Deployment,
-        { suite_id: check_suite.id },
+        { suite_id: workflow_run.check_suite_id },
         {
-          suite_id:      check_suite.id,
-          repo_id:       repository.id,
+          suite_id:       workflow_run.check_suite_id,
+          repo_id:        repository.id,
+          installation_id: installation?.id,
           repo_full_name: repository.full_name,
-          sha:           check_suite.head_sha,
-          branch:        check_suite.head_branch,
-          status:        check_suite.status,
-          conclusion:    check_suite.conclusion,
+          sha:            workflow_run.head_sha,
+          branch:         workflow_run.head_branch,
+          status:         workflow_run.status,
+          conclusion:     workflow_run.conclusion,
           duration_ms,
-          pr_numbers:    suite?.pr_numbers ?? pr_numbers,
-          workflow_name: workflowName,
-          deployed_at:   completedAt,
+          workflow_name:  workflowName,
+          deployed_at:    completedAt,
         },
         app.log,
-        `Deployment ${check_suite.id}`,
+        `Deployment.workflow_run ${workflow_run.check_suite_id}`,
       );
       app.log.info(
-        `[check] deployment recorded suite=${check_suite.id} sha=${check_suite.head_sha}`,
+        `[check] deployment recorded workflow_run=${workflow_run.id} sha=${workflow_run.head_sha}`,
       );
     }
   });

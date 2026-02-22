@@ -14,14 +14,17 @@ flowchart LR
     API -->|JSON| GF[Grafana · Infinity DS]
 ```
 
-El bot escucha cuatro tipos de eventos de GitHub:
+El bot escucha cinco tipos de eventos de GitHub:
 
 | Evento GitHub | Colección MongoDB | Métrica DORA |
 |---|---|---|
-| `check_suite.completed` | `checksuites` + `deployments` | Deployment Frequency, Lead Time, CFR |
+| `workflow_run.completed` | `checksuites` + `deployments` | Deployment Frequency, Lead Time |
+| `check_suite.completed` | `checksuites` | CFR (todos los suites, no solo deploys) |
 | `pull_request.closed` | `pullrequests` | PR Lifetime |
 | `issues.labeled` | `incidents` | MTTR |
 | `issues.closed` | `incidents` | MTTR |
+
+> **Por qué dos eventos de checks:** `check_suite.app.name` siempre es `"GitHub Actions"` — no contiene el nombre real del workflow. El nombre real (`"Deploy – git-bot"`, etc.) llega en `workflow_run.name`, por eso la detección de deploys usa `workflow_run.completed`.
 
 ---
 
@@ -288,7 +291,7 @@ docker exec probot_mongo mongosh probot_metrics --eval \
 
 - [ ] Workflows de deploy tienen nombres con `deploy`, `release`, `publish` o `-cd`
 - [ ] El GitHub App tiene permiso de lectura sobre **Checks**, **Pull requests** e **Issues**
-- [ ] Los webhooks incluyen eventos: `check_suite`, `pull_request`, `issues`
+- [ ] Los webhooks incluyen eventos: `check_suite`, `workflow_run`, `pull_request`, `issues`
 - [ ] Los PRs siguen el formato `[TIPO] Descripción [TICKET-NNN]`
 - [ ] Los incidentes se gestionan como Issues con la etiqueta `incident`
 - [ ] Los PRs de corrección de incidentes llevan la etiqueta `fix`
