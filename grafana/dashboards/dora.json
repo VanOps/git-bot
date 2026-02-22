@@ -8,42 +8,104 @@
     }
   ],
   "__requires": [
-    { "type": "grafana",    "id": "grafana",                            "name": "Grafana",   "version": "11.0.0" },
-    { "type": "datasource", "id": "yesoreyeram-infinity-datasource",    "name": "Infinity",  "version": "2.0.0"  },
-    { "type": "panel",      "id": "stat",                               "name": "Stat",      "version": "" },
-    { "type": "panel",      "id": "gauge",                              "name": "Gauge",     "version": "" },
-    { "type": "panel",      "id": "table",                              "name": "Table",     "version": "" },
-    { "type": "panel",      "id": "timeseries",                         "name": "Time series","version": "" },
-    { "type": "panel",      "id": "barchart",                           "name": "Bar chart", "version": "" }
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "yesoreyeram-infinity-datasource",
+      "name": "Infinity",
+      "version": "2.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "barchart",
+      "name": "Bar chart",
+      "version": ""
+    }
   ],
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "graphTooltip": 1,
   "id": null,
   "links": [],
   "refresh": "5m",
   "schemaVersion": 39,
-  "tags": ["dora", "devops", "probot"],
-  "time": { "from": "now-30d", "to": "now" },
+  "tags": [
+    "dora",
+    "devops",
+    "probot"
+  ],
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "DORA Metrics – git-bot",
   "uid": "dora-metrics-v1",
   "version": 1,
-
   "templating": {
     "list": [
       {
         "name": "days",
         "label": "Ventana (días)",
         "type": "custom",
-        "current": { "text": "30", "value": "30" },
+        "current": {
+          "text": "30",
+          "value": "30"
+        },
         "options": [
-          { "text": "7",   "value": "7"   },
-          { "text": "30",  "value": "30",  "selected": true },
-          { "text": "60",  "value": "60"  },
-          { "text": "90",  "value": "90"  },
-          { "text": "180", "value": "180" }
+          {
+            "text": "7",
+            "value": "7"
+          },
+          {
+            "text": "30",
+            "value": "30",
+            "selected": true
+          },
+          {
+            "text": "60",
+            "value": "60"
+          },
+          {
+            "text": "90",
+            "value": "90"
+          },
+          {
+            "text": "180",
+            "value": "180"
+          }
         ],
         "query": "7,30,60,90,180",
         "hide": 0,
@@ -52,26 +114,33 @@
       }
     ]
   },
-
   "panels": [
-
     {
       "id": 1,
       "type": "text",
       "title": "",
-      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 2 },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 2
+      },
       "options": {
         "mode": "markdown",
         "content": "## DORA Metrics  •  últimos `$days` días\nDatos en tiempo real desde MongoDB vía Probot · [API `/metrics/dora/summary`](http://localhost:3000/metrics/dora/summary)"
       }
     },
-
     {
       "id": 2,
       "type": "stat",
       "title": "Deployment Frequency (deploys/día)",
       "description": "Elite: múltiples/día · High: 1/día–1/sem · Medium: 1/sem–1/mes · Low: <1/mes",
-      "gridPos": { "x": 0, "y": 2, "w": 6, "h": 5 },
+      "gridPos": {
+        "x": 0,
+        "y": 2,
+        "w": 6,
+        "h": 5
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
@@ -79,19 +148,39 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red",    "value": null },
-              { "color": "yellow", "value": 0.14 },
-              { "color": "green",  "value": 1    },
-              { "color": "blue",   "value": 3    }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.14
+              },
+              {
+                "color": "green",
+                "value": 1
+              },
+              {
+                "color": "blue",
+                "value": 3
+              }
             ]
           },
           "mappings": [],
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^avg_deploy_freq$/", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^avg_deploy_freq$/",
+          "values": false
+        },
         "orientation": "auto",
         "textMode": "auto",
         "colorMode": "background",
@@ -99,7 +188,10 @@
       },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -108,24 +200,57 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "avg_deploy_freq",   "text": "avg_deploy_freq",   "type": "number" },
-            { "selector": "total_deploys",      "text": "total_deploys",      "type": "number" },
-            { "selector": "avg_lead_time_min",  "text": "avg_lead_time_min",  "type": "number" },
-            { "selector": "cfr_pct",            "text": "cfr_pct",            "type": "number" },
-            { "selector": "avg_ttr_h",          "text": "avg_ttr_h",          "type": "number" },
-            { "selector": "avg_pr_lifetime_h",  "text": "avg_pr_lifetime_h",  "type": "number" },
-            { "selector": "total_prs_merged",   "text": "total_prs_merged",   "type": "number" }
-          ]
+            {
+              "selector": "avg_deploy_freq",
+              "text": "avg_deploy_freq",
+              "type": "number"
+            },
+            {
+              "selector": "total_deploys",
+              "text": "total_deploys",
+              "type": "number"
+            },
+            {
+              "selector": "avg_lead_time_min",
+              "text": "avg_lead_time_min",
+              "type": "number"
+            },
+            {
+              "selector": "cfr_pct",
+              "text": "cfr_pct",
+              "type": "number"
+            },
+            {
+              "selector": "avg_ttr_h",
+              "text": "avg_ttr_h",
+              "type": "number"
+            },
+            {
+              "selector": "avg_pr_lifetime_h",
+              "text": "avg_pr_lifetime_h",
+              "type": "number"
+            },
+            {
+              "selector": "total_prs_merged",
+              "text": "total_prs_merged",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 3,
       "type": "stat",
       "title": "Lead Time for Changes (min)",
       "description": "Elite: <60 min · High: <1 día · Medium: <1 sem · Low: >1 sem",
-      "gridPos": { "x": 6, "y": 2, "w": 6, "h": 5 },
+      "gridPos": {
+        "x": 6,
+        "y": 2,
+        "w": 6,
+        "h": 5
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "m",
@@ -133,25 +258,48 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue",   "value": null },
-              { "color": "green",  "value": 0    },
-              { "color": "yellow", "value": 1440 },
-              { "color": "red",    "value": 10080 }
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 1440
+              },
+              {
+                "color": "red",
+                "value": 10080
+              }
             ]
           },
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^avg_lead_time_min$/", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^avg_lead_time_min$/",
+          "values": false
+        },
         "orientation": "auto",
         "colorMode": "background",
         "graphMode": "none"
       },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -160,18 +308,27 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "avg_lead_time_min", "text": "avg_lead_time_min", "type": "number" }
-          ]
+            {
+              "selector": "avg_lead_time_min",
+              "text": "avg_lead_time_min",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 4,
       "type": "gauge",
       "title": "Change Failure Rate (%)",
       "description": "Elite: 0–15% · High: 16–30% · Low: >45%",
-      "gridPos": { "x": 12, "y": 2, "w": 6, "h": 5 },
+      "gridPos": {
+        "x": 12,
+        "y": 2,
+        "w": 6,
+        "h": 5
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -181,25 +338,48 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green",  "value": null },
-              { "color": "yellow", "value": 15   },
-              { "color": "orange", "value": 30   },
-              { "color": "red",    "value": 45   }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 15
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "red",
+                "value": 45
+              }
             ]
           },
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^cfr_pct$/", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^cfr_pct$/",
+          "values": false
+        },
         "orientation": "auto",
         "showThresholdLabels": true,
         "showThresholdMarkers": true
       },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -207,17 +387,28 @@
           "method": "GET",
           "format": "table",
           "root_selector": "",
-          "columns": [{ "selector": "cfr_pct", "text": "cfr_pct", "type": "number" }]
+          "columns": [
+            {
+              "selector": "cfr_pct",
+              "text": "cfr_pct",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 5,
       "type": "stat",
       "title": "Time to Restore – MTTR (h)",
       "description": "Elite: <1 h · High: <1 día · Medium: <1 sem · Low: >1 sem",
-      "gridPos": { "x": 18, "y": 2, "w": 6, "h": 5 },
+      "gridPos": {
+        "x": 18,
+        "y": 2,
+        "w": 6,
+        "h": 5
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "h",
@@ -225,25 +416,48 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue",   "value": null },
-              { "color": "green",  "value": 0    },
-              { "color": "yellow", "value": 24   },
-              { "color": "red",    "value": 168  }
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 24
+              },
+              {
+                "color": "red",
+                "value": 168
+              }
             ]
           },
-          "color": { "mode": "thresholds" }
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^avg_ttr_h$/", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^avg_ttr_h$/",
+          "values": false
+        },
         "orientation": "auto",
         "colorMode": "background",
         "graphMode": "none"
       },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -251,28 +465,45 @@
           "method": "GET",
           "format": "table",
           "root_selector": "",
-          "columns": [{ "selector": "avg_ttr_h", "text": "avg_ttr_h", "type": "number" }]
+          "columns": [
+            {
+              "selector": "avg_ttr_h",
+              "text": "avg_ttr_h",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 10,
       "type": "row",
       "title": "Deployment Frequency – Detalle por repo",
       "collapsed": false,
-      "gridPos": { "x": 0, "y": 7, "w": 24, "h": 1 }
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 1
+      }
     },
-
     {
       "id": 6,
       "type": "barchart",
       "title": "Deploys por repo (últimos $days días)",
-      "gridPos": { "x": 0, "y": 8, "w": 14, "h": 8 },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 14,
+        "h": 8
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": { "mode": "palette-classic" }
+          "color": {
+            "mode": "palette-classic"
+          }
         },
         "overrides": []
       },
@@ -282,11 +513,18 @@
         "groupWidth": 0.7,
         "barWidth": 0.97,
         "fillOpacity": 80,
-        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -295,46 +533,98 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "_id",          "text": "_id",          "type": "string" },
-            { "selector": "total_deploys", "text": "Total deploys", "type": "number" },
-            { "selector": "avg_per_day",   "text": "Avg/día",       "type": "number" }
-          ]
+            {
+              "selector": "_id",
+              "text": "_id",
+              "type": "string"
+            },
+            {
+              "selector": "total_deploys",
+              "text": "Total deploys",
+              "type": "number"
+            },
+            {
+              "selector": "avg_per_day",
+              "text": "Avg/día",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 7,
       "type": "table",
       "title": "Tabla – Deployment Frequency",
-      "gridPos": { "x": 14, "y": 8, "w": 10, "h": 8 },
+      "gridPos": {
+        "x": 14,
+        "y": 8,
+        "w": 10,
+        "h": 8
+      },
       "fieldConfig": {
-        "defaults": { "unit": "short" },
+        "defaults": {
+          "unit": "short"
+        },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "avg_per_day" },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_per_day"
+            },
             "properties": [
-              { "id": "unit",     "value": "short"    },
-              { "id": "decimals", "value": 2          },
-              { "id": "custom.displayMode", "value": "color-background" },
-              { "id": "thresholds", "value": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "red",    "value": null },
-                  { "color": "yellow", "value": 0.14 },
-                  { "color": "green",  "value": 1    }
-                ]
-              }}
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.14
+                    },
+                    {
+                      "color": "green",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
             ]
           }
         ]
       },
       "options": {
         "showHeader": true,
-        "sortBy": [{ "displayName": "Total deploys", "desc": true }]
+        "sortBy": [
+          {
+            "displayName": "Total deploys",
+            "desc": true
+          }
+        ]
       },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -343,50 +633,102 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "_id",          "text": "Repo",          "type": "string" },
-            { "selector": "total_deploys", "text": "Total deploys", "type": "number" },
-            { "selector": "active_days",   "text": "Días activos",  "type": "number" },
-            { "selector": "avg_per_day",   "text": "avg_per_day",   "type": "number" }
-          ]
+            {
+              "selector": "_id",
+              "text": "Repo",
+              "type": "string"
+            },
+            {
+              "selector": "total_deploys",
+              "text": "Total deploys",
+              "type": "number"
+            },
+            {
+              "selector": "active_days",
+              "text": "Días activos",
+              "type": "number"
+            },
+            {
+              "selector": "avg_per_day",
+              "text": "avg_per_day",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 11,
       "type": "row",
       "title": "Lead Time · Change Failure Rate",
       "collapsed": false,
-      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 1 }
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 1
+      }
     },
-
     {
       "id": 8,
       "type": "table",
       "title": "Lead Time por repo (min)",
-      "gridPos": { "x": 0, "y": 17, "w": 12, "h": 7 },
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 7
+      },
       "fieldConfig": {
-        "defaults": { "unit": "m", "decimals": 1 },
+        "defaults": {
+          "unit": "m",
+          "decimals": 1
+        },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "avg_lead_min" },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_lead_min"
+            },
             "properties": [
-              { "id": "custom.displayMode", "value": "color-background" },
-              { "id": "thresholds", "value": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green",  "value": null },
-                  { "color": "yellow", "value": 1440 },
-                  { "color": "red",    "value": 10080 }
-                ]
-              }}
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1440
+                    },
+                    {
+                      "color": "red",
+                      "value": 10080
+                    }
+                  ]
+                }
+              }
             ]
           }
         ]
       },
-      "options": { "showHeader": true },
+      "options": {
+        "showHeader": true
+      },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -395,44 +737,99 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "_id",          "text": "Repo",         "type": "string" },
-            { "selector": "avg_lead_min", "text": "avg_lead_min", "type": "number" },
-            { "selector": "min_lead_min", "text": "Min (min)",    "type": "number" },
-            { "selector": "max_lead_min", "text": "Max (min)",    "type": "number" },
-            { "selector": "count",        "text": "Pipelines",    "type": "number" }
-          ]
+            {
+              "selector": "_id",
+              "text": "Repo",
+              "type": "string"
+            },
+            {
+              "selector": "avg_lead_min",
+              "text": "avg_lead_min",
+              "type": "number"
+            },
+            {
+              "selector": "min_lead_min",
+              "text": "Min (min)",
+              "type": "number"
+            },
+            {
+              "selector": "max_lead_min",
+              "text": "Max (min)",
+              "type": "number"
+            },
+            {
+              "selector": "count",
+              "text": "Pipelines",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 9,
       "type": "table",
       "title": "Change Failure Rate por repo",
-      "gridPos": { "x": 12, "y": 17, "w": 12, "h": 7 },
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 7
+      },
       "fieldConfig": {
-        "defaults": { "unit": "short", "decimals": 1 },
+        "defaults": {
+          "unit": "short",
+          "decimals": 1
+        },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "failure_rate_pct" },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failure_rate_pct"
+            },
             "properties": [
-              { "id": "unit", "value": "percent" },
-              { "id": "custom.displayMode", "value": "color-background" },
-              { "id": "thresholds", "value": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green",  "value": null },
-                  { "color": "yellow", "value": 15   },
-                  { "color": "red",    "value": 30   }
-                ]
-              }}
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 15
+                    },
+                    {
+                      "color": "red",
+                      "value": 30
+                    }
+                  ]
+                }
+              }
             ]
           }
         ]
       },
-      "options": { "showHeader": true },
+      "options": {
+        "showHeader": true
+      },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -441,50 +838,102 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "_id",             "text": "Repo",             "type": "string" },
-            { "selector": "total",           "text": "Total suites",     "type": "number" },
-            { "selector": "failed",          "text": "Fallidas",         "type": "number" },
-            { "selector": "failure_rate_pct","text": "failure_rate_pct", "type": "number" }
-          ]
+            {
+              "selector": "_id",
+              "text": "Repo",
+              "type": "string"
+            },
+            {
+              "selector": "total",
+              "text": "Total suites",
+              "type": "number"
+            },
+            {
+              "selector": "failed",
+              "text": "Fallidas",
+              "type": "number"
+            },
+            {
+              "selector": "failure_rate_pct",
+              "text": "failure_rate_pct",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 12,
       "type": "row",
       "title": "MTTR · PR Lifetime · Failed Jobs",
       "collapsed": false,
-      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 1 }
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 1
+      }
     },
-
     {
       "id": 13,
       "type": "table",
       "title": "Time to Restore por repo (h)",
-      "gridPos": { "x": 0, "y": 25, "w": 8, "h": 7 },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 8,
+        "h": 7
+      },
       "fieldConfig": {
-        "defaults": { "unit": "h", "decimals": 1 },
+        "defaults": {
+          "unit": "h",
+          "decimals": 1
+        },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "avg_ttr_h" },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_ttr_h"
+            },
             "properties": [
-              { "id": "custom.displayMode", "value": "color-background" },
-              { "id": "thresholds", "value": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "green",  "value": null },
-                  { "color": "yellow", "value": 24   },
-                  { "color": "red",    "value": 168  }
-                ]
-              }}
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 24
+                    },
+                    {
+                      "color": "red",
+                      "value": 168
+                    }
+                  ]
+                }
+              }
             ]
           }
         ]
       },
-      "options": { "showHeader": true },
+      "options": {
+        "showHeader": true
+      },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -493,29 +942,62 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "_id",        "text": "Repo",       "type": "string" },
-            { "selector": "avg_ttr_h",  "text": "avg_ttr_h",  "type": "number" },
-            { "selector": "min_ttr_h",  "text": "Min (h)",    "type": "number" },
-            { "selector": "max_ttr_h",  "text": "Max (h)",    "type": "number" },
-            { "selector": "incidents",  "text": "Incidentes", "type": "number" }
-          ]
+            {
+              "selector": "_id",
+              "text": "Repo",
+              "type": "string"
+            },
+            {
+              "selector": "avg_ttr_h",
+              "text": "avg_ttr_h",
+              "type": "number"
+            },
+            {
+              "selector": "min_ttr_h",
+              "text": "Min (h)",
+              "type": "number"
+            },
+            {
+              "selector": "max_ttr_h",
+              "text": "Max (h)",
+              "type": "number"
+            },
+            {
+              "selector": "incidents",
+              "text": "Incidentes",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 14,
       "type": "table",
       "title": "PR Lifetime por repo (h)",
-      "gridPos": { "x": 8, "y": 25, "w": 8, "h": 7 },
+      "gridPos": {
+        "x": 8,
+        "y": 25,
+        "w": 8,
+        "h": 7
+      },
       "fieldConfig": {
-        "defaults": { "unit": "h", "decimals": 1 },
+        "defaults": {
+          "unit": "h",
+          "decimals": 1
+        },
         "overrides": []
       },
-      "options": { "showHeader": true },
+      "options": {
+        "showHeader": true
+      },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -524,42 +1006,96 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "_id",            "text": "Repo",           "type": "string" },
-            { "selector": "avg_lifetime_h", "text": "avg_lifetime_h", "type": "number" },
-            { "selector": "min_lifetime_h", "text": "Min (h)",        "type": "number" },
-            { "selector": "max_lifetime_h", "text": "Max (h)",        "type": "number" },
-            { "selector": "prs_merged",     "text": "PRs merged",     "type": "number" }
-          ]
+            {
+              "selector": "_id",
+              "text": "Repo",
+              "type": "string"
+            },
+            {
+              "selector": "avg_lifetime_h",
+              "text": "avg_lifetime_h",
+              "type": "number"
+            },
+            {
+              "selector": "min_lifetime_h",
+              "text": "Min (h)",
+              "type": "number"
+            },
+            {
+              "selector": "max_lifetime_h",
+              "text": "Max (h)",
+              "type": "number"
+            },
+            {
+              "selector": "prs_merged",
+              "text": "PRs merged",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     },
-
     {
       "id": 15,
       "type": "table",
       "title": "Top 20 jobs fallidos",
-      "gridPos": { "x": 16, "y": 25, "w": 8, "h": 7 },
+      "gridPos": {
+        "x": 16,
+        "y": 25,
+        "w": 8,
+        "h": 7
+      },
       "fieldConfig": {
-        "defaults": { "unit": "short" },
+        "defaults": {
+          "unit": "short"
+        },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "fails" },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fails"
+            },
             "properties": [
-              { "id": "custom.displayMode", "value": "color-background" },
-              { "id": "thresholds", "value": {
-                "mode": "absolute",
-                "steps": [
-                  { "color": "yellow", "value": null },
-                  { "color": "red",    "value": 5    }
-                ]
-              }}
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "yellow",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
+                  ]
+                }
+              }
             ]
           }
         ]
       },
-      "options": { "showHeader": true, "sortBy": [{ "displayName": "fails", "desc": true }] },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "fails",
+            "desc": true
+          }
+        ]
+      },
       "targets": [
         {
-          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "infinity-dora"
+          },
           "refId": "A",
           "type": "json",
           "source": "url",
@@ -568,13 +1104,25 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "_id.name",        "text": "Job name",       "type": "string" },
-            { "selector": "fails",            "text": "fails",          "type": "number" },
-            { "selector": "avg_duration_ms",  "text": "Avg duration ms","type": "number" }
-          ]
+            {
+              "selector": "_id.name",
+              "text": "Job name",
+              "type": "string"
+            },
+            {
+              "selector": "fails",
+              "text": "fails",
+              "type": "number"
+            },
+            {
+              "selector": "avg_duration_ms",
+              "text": "Avg duration ms",
+              "type": "number"
+            }
+          ],
+          "parser": "backend"
         }
       ]
     }
-
   ]
 }

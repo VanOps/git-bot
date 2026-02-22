@@ -83,7 +83,9 @@ export function registerMetricsRoutes(getRouter, log) {
         return arr.reduce((s, r) => s + (r[field] ?? 0), 0) / arr.length;
       };
 
-      res.json({
+      // Infinity datasource (table format) requiere un array, no un objeto plano.
+      // Envolvemos en array para que el plugin pueda mapear las columnas correctamente.
+      res.json([{
         window_days:          days,
         avg_deploy_freq:      avg(freq, 'avg_per_day'),
         total_deploys:        freq.reduce((s, r) => s + (r.total_deploys ?? 0), 0),
@@ -93,7 +95,7 @@ export function registerMetricsRoutes(getRouter, log) {
         avg_ttr_h:            avg(mttr, 'avg_ttr_h'),
         avg_pr_lifetime_h:    avg(prl,  'avg_lifetime_h'),
         total_prs_merged:     prl.reduce((s, r) => s + (r.prs_merged ?? 0), 0),
-      });
+      }]);
     } catch (err) {
       log.error({ err }, '[metrics] /dora/summary error');
       res.status(500).json({ error: err.message });
