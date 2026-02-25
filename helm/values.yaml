@@ -1,0 +1,168 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  git-bot – Helm Values                                                      ║
+# ║  Reemplaza los valores marcados con <CAMBIAR> antes de desplegar             ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# ── Réplicas ──────────────────────────────────────────────────────────────────
+replicaCount: 1
+
+# ── Imagen de la aplicación (publicada en GHCR) ───────────────────────────────
+image:
+  # Ajusta al propietario real del repositorio en GitHub
+  repository: ghcr.io/epicuro/git-bot
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Secret con credenciales de GHCR para pullImages privadas
+# kubectl create secret docker-registry ghcr-pull-secret \
+#   --docker-server=ghcr.io \
+#   --docker-username=<user> \
+#   --docker-password=<PAT>
+imagePullSecrets:
+  - name: ghcr-pull-secret
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  name: ""
+
+# ── Variables de entorno no sensibles ─────────────────────────────────────────
+config:
+  logLevel: info
+  nodeEnv: production
+  incidentLabel: incident
+
+# ── Secreto con credenciales de GitHub App ────────────────────────────────────
+# Si existingSecret está vacío, el chart crea un Secret mínimo de placeholder.
+# En producción crea el secreto de forma externa (SOPS, Vault, Sealed Secrets):
+#
+#   kubectl create secret generic git-bot-secret \
+#     --from-literal=APP_ID=<id> \
+#     --from-literal=WEBHOOK_SECRET=<secret> \
+#     --from-literal=DATABASE_URL=mongodb://<host>:27017/probot_metrics \
+#     --from-file=PRIVATE_KEY=./private-key.pem
+#
+existingSecret: ""
+
+# ── Service ───────────────────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  port: 3000
+
+# ── Ingress (opcional) ────────────────────────────────────────────────────────
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: git-bot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: git-bot-tls
+  #    hosts:
+  #      - git-bot.example.com
+
+# ── Recursos ──────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# ── Sondas de salud ───────────────────────────────────────────────────────────
+livenessProbe:
+  httpGet:
+    path: /metrics/health
+    port: 3000
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /metrics/health
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+
+# ── Subchart: MongoDB ─────────────────────────────────────────────────────────
+mongodb:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false          # activa en producción y configura rootPassword
+    # rootPassword: <CAMBIAR>
+    # database: probot_metrics
+  persistence:
+    enabled: true
+    size: 5Gi
+    # storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ── Subchart: Grafana ─────────────────────────────────────────────────────────
+grafana:
+  enabled: true
+
+  # Contraseña del admin de Grafana (cambia o usa adminPasswordSecret)
+  adminPassword: "admin"   # <CAMBIAR>
+  # adminPasswordSecret: grafana-admin-secret
+  # adminPasswordSecretKey: admin-password
+
+  # Puerto del servicio Grafana (el contenedor escucha en 3000; exponemos en 3001)
+  service:
+    type: ClusterIP
+    port: 3001
+    targetPort: 3000
+
+  # Plugin Infinity para consumir la API REST de git-bot
+  plugins:
+    - yesoreyeram-infinity-datasource
+
+  # ── Configuración de Grafana (grafana.ini) ──────────────────────────────────
+  grafana.ini:
+    server:
+      http_port: 3000
+    analytics:
+      check_for_updates: false
+
+  # ── Sidecar – auto-descubre ConfigMaps con las etiquetas correctas ──────────
+  # El parent chart crea los ConfigMaps con la etiqueta grafana_datasource="1"
+  # o grafana_dashboard="1" para que el sidecar los inyecte automáticamente.
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+      searchNamespace: ALL
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+      folder: /var/lib/grafana/dashboards/dora
+
+  persistence:
+    enabled: true
+    size: 2Gi
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi

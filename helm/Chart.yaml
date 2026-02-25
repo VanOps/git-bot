@@ -1,0 +1,31 @@
+apiVersion: v2
+name: git-bot
+description: GitHub App para métricas DORA y estadísticas de workflows de GitHub Actions
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - github
+  - dora-metrics
+  - probot
+  - grafana
+  - mongodb
+home: https://github.com/epicuro/git-bot
+sources:
+  - https://github.com/epicuro/git-bot
+icon: https://raw.githubusercontent.com/epicuro/git-bot/main/docs/icon.png
+maintainers:
+  - name: epicuro
+
+dependencies:
+  # MongoDB 7 – almacenamiento de métricas
+  - name: mongodb
+    version: "~15.0"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    condition: mongodb.enabled
+
+  # Grafana OSS – visualización de dashboards
+  - name: grafana
+    version: "~8.0"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: grafana.enabled

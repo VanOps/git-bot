@@ -1,0 +1,23 @@
+# ConfigMap con los dashboards de Grafana en formato JSON.
+# Los JSONs provienen de grafana/dashboards/ en el repositorio.
+#
+# Para actualizar los dashboards:
+#   kubectl create configmap grafana-dashboards \
+#     --from-file=dora.json=grafana/dashboards/dora.json \
+#     --from-file=workflows.json=grafana/dashboards/workflows.json \
+#     -n git-bot --dry-run=client -o yaml | kubectl apply -f -
+#
+# NOTA: Este archivo se genera automáticamente. Ejecuta el comando anterior
+#       en lugar de editar manualmente el JSON embebido.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: git-bot
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: visualization
+binaryData: {}
+# Los datos JSON se aplican con kubectl desde los archivos fuente (ver comentario arriba).
+# Placeholder vacío para que kubectl apply no falle en primera aplicación.
+data: {}

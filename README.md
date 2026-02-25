@@ -16,6 +16,7 @@ GitHub App construida con [Probot](https://probot.github.io) + Node.js 20 que ca
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Inicio rápido](#inicio-rápido)
 - [Docker Compose](#docker-compose)
+- [Kubernetes / Helm / ArgoCD](#kubernetes--helm--argocd)
 - [Grafana](#grafana)
 - [GitHub App — Configuración](#github-app--configuración)
 - [Variables de entorno](#variables-de-entorno)
@@ -369,6 +370,28 @@ graph LR
 | `grafana` | `grafana/grafana-oss:11.4.0` | 3001  | `grafana_data:/var/lib/grafana`  |
 
 El servicio `probot` arranca solo cuando `mongo` supera su healthcheck. Grafana arranca después de `probot` y consulta su API vía el plugin **Infinity** (OSS, sin licencia Enterprise).
+
+---
+
+## Kubernetes / Helm / ArgoCD
+
+El repositorio incluye tres métodos de despliegue en Kubernetes. Consulta la guía completa en [docs/deployment.md](docs/deployment.md).
+
+| Método | Directorio | Descripción |
+|---|---|---|
+| **Helm chart** | [`helm/`](helm/) | Chart con subcharts de MongoDB y Grafana; publicado en GHCR vía CI |
+| **ArgoCD GitOps** | [`argocd/`](argocd/) | Pull deploy automático desde GHCR OCI registry |
+| **Manifiestos raw** | [`kubernetes/`](kubernetes/) | Kustomize con Deployment, StatefulSet, Services y ConfigMaps |
+
+```bash
+# Despliegue rápido con Helm desde GHCR
+helm upgrade --install git-bot oci://ghcr.io/<owner>/charts/git-bot \
+  --version 0.1.0 --namespace git-bot --create-namespace \
+  --set existingSecret=git-bot-secret
+
+# Despliegue con manifiestos raw (Kustomize)
+kubectl apply -k kubernetes/
+```
 
 ---
 

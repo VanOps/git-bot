@@ -1,0 +1,26 @@
+{{- if .Values.grafana.enabled }}
+# ConfigMap descubierto automáticamente por el sidecar de Grafana.
+# Contiene la configuración del datasource Infinity apuntando al servicio git-bot.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "git-bot.fullname" . }}-grafana-datasource
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "git-bot.labels" . | nindent 4 }}
+    # Etiqueta que el sidecar de Grafana usa para auto-descubrir datasources
+    grafana_datasource: "1"
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Infinity – DORA API
+        type: yesoreyeram-infinity-datasource
+        uid: infinity-dora
+        access: proxy
+        isDefault: true
+        editable: false
+        jsonData:
+          allowedHosts:
+            - {{ include "git-bot.serviceUrl" . }}
+{{- end }}

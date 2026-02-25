@@ -1,0 +1,95 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  ArgoCD Application – git-bot                                               ║
+# ║                                                                              ║
+# ║  Despliega el Helm chart publicado en GHCR mediante GitOps (pull deploy).   ║
+# ║  ArgoCD sondea el registry OCI y sincroniza cuando detecta cambios.         ║
+# ║                                                                              ║
+# ║  Requisitos previos:                                                         ║
+# ║    1. ArgoCD instalado en el clúster                                         ║
+# ║    2. El OCI registry de GHCR registrado como repositorio en ArgoCD:         ║
+# ║         argocd repo add oci://ghcr.io/<owner>/charts \                      ║
+# ║           --type helm --name ghcr-charts                                    ║
+# ║    3. Namespace git-bot creado y Secret de credenciales presente             ║
+# ║                                                                              ║
+# ║  Aplicar con:                                                                ║
+# ║    kubectl apply -f argocd/application.yaml -n argocd                       ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: git-bot
+  namespace: argocd          # namespace donde vive ArgoCD
+  labels:
+    app.kubernetes.io/name: git-bot
+    app.kubernetes.io/component: dora-metrics
+  # Elimina la Application de ArgoCD cuando se borre este recurso
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+spec:
+  project: default
+
+  # ── Fuente: Helm chart en GHCR (OCI) ─────────────────────────────────────────
+  source:
+    # Cambia <owner> por el propietario real del repositorio GitHub
+    repoURL: oci://ghcr.io/<owner>/charts
+    chart: git-bot
+    # Usa una versión fija para reproducibilidad; actualiza cuando publiques nueva versión
+    targetRevision: 0.1.0
+
+    helm:
+      releaseName: git-bot
+      # Sobreescrituras de valores (evita modificar values.yaml del chart publicado)
+      values: |
+        image:
+          # Tag de imagen a usar; el workflow lo actualiza con el SHA del commit
+          tag: "latest"
+
+        # Referencia al Secret preexistente con credenciales de GitHub App
+        # kubectl create secret generic git-bot-secret --from-literal=APP_ID=... etc.
+        existingSecret: git-bot-secret
+
+        ingress:
+          enabled: false   # activa y configura hosts si expones el webhook públicamente
+
+        grafana:
+          adminPassword: ""   # usa adminPasswordSecret en producción
+          # adminPasswordSecret: grafana-admin-secret
+          # adminPasswordSecretKey: admin-password
+
+        mongodb:
+          auth:
+            enabled: false    # activa en producción
+
+  # ── Destino: clúster y namespace de despliegue ────────────────────────────────
+  destination:
+    # https://kubernetes.default.svc → clúster donde corre ArgoCD
+    server: https://kubernetes.default.svc
+    namespace: git-bot
+
+  # ── Política de sincronización ────────────────────────────────────────────────
+  syncPolicy:
+    automated:
+      # Elimina recursos huérfanos del clúster cuando desaparecen del chart
+      prune: true
+      # Revierte cambios manuales en el clúster (GitOps estricto)
+      selfHeal: true
+    syncOptions:
+      # Crea el namespace si no existe
+      - CreateNamespace=true
+      # Valida los manifiestos con el servidor antes de aplicar
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+  # ── Criterios de salud personalizados ─────────────────────────────────────────
+  ignoreDifferences:
+    # Ignora anotaciones añadidas por el admission controller
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/template/metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration

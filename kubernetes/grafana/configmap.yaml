@@ -1,0 +1,46 @@
+---
+# ── Datasource: Infinity apuntando al servicio git-bot ────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: git-bot
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: visualization
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Infinity – DORA API
+        type: yesoreyeram-infinity-datasource
+        uid: infinity-dora
+        access: proxy
+        isDefault: true
+        editable: false
+        jsonData:
+          allowedHosts:
+            - http://git-bot:3000
+---
+# ── Proveedor de dashboards (lee JSONs montados en /var/lib/grafana/dashboards) ─
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: git-bot
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: visualization
+data:
+  provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: DORA Metrics
+        orgId: 1
+        type: file
+        disableDeletion: true
+        updateIntervalSeconds: 30
+        allowUiUpdates: false
+        options:
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: false

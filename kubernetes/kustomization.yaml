@@ -1,0 +1,27 @@
+# Kustomization raíz – aplica todos los manifiestos de forma ordenada
+# Uso: kubectl apply -k kubernetes/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: git-bot
+
+resources:
+  # 1. Namespace (siempre primero)
+  - namespace.yaml
+
+  # 2. Base de datos
+  - mongodb/service.yaml
+  - mongodb/statefulset.yaml
+
+  # 3. Aplicación principal
+  - git-bot/configmap.yaml
+  - git-bot/secret.yaml
+  - git-bot/deployment.yaml
+  - git-bot/service.yaml
+
+  # 4. Visualización
+  - grafana/pvc.yaml
+  - grafana/configmap.yaml
+  - grafana/configmap-dashboards.yaml
+  - grafana/deployment.yaml
+  - grafana/service.yaml
