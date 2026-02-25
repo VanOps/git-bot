@@ -1,8 +1,8 @@
 /**
- * DORA Metrics REST API
+ * Metrics REST API
  * Expone los aggregados de MongoDB como JSON para Grafana Infinity datasource.
  *
- * Rutas registradas bajo el prefijo /metrics:
+ * ── DORA Metrics (/metrics/dora/*) ──────────────────────────────────────────
  *   GET /metrics/health
  *   GET /metrics/dora/summary             ← KPIs planos (para stat panels)
  *   GET /metrics/dora/deployment-frequency
@@ -12,9 +12,17 @@
  *   GET /metrics/dora/pr-lifetime
  *   GET /metrics/dora/failed-jobs
  *
- * Query params opcionales:
- *   ?days=30      ventana temporal (default 30)
- *   ?repo_id=NNN  filtrar por repo (default: todos)
+ *   Query params: ?days=30  ?repo_id=NNN
+ *
+ * ── Workflow Statistics (/metrics/workflows/*) ───────────────────────────────
+ *   GET /metrics/workflows/repos          ← lista de repos para variable Grafana
+ *   GET /metrics/workflows/names          ← lista de workflow names
+ *   GET /metrics/workflows/summary        ← KPIs globales
+ *   GET /metrics/workflows/by-repo        ← stats agrupadas por repo
+ *   GET /metrics/workflows/by-name        ← stats agrupadas por workflow
+ *   GET /metrics/workflows/over-time      ← tendencia diaria
+ *
+ *   Query params: ?days=30  ?repo=owner/repo  ?workflow=CI
  */
 
 import {
@@ -25,6 +33,15 @@ import {
   prLifetime,
   failedJobsBreakdown,
 } from '../queries/dora.js';
+
+import {
+  listRepos,
+  listWorkflows,
+  workflowSummary,
+  workflowsByRepo,
+  workflowsByName,
+  workflowsOverTime,
+} from '../queries/workflows.js';
 
 /** Parsea los query-params comunes y devuelve { days, repoId }. */
 function parseParams(req) {
@@ -109,6 +126,79 @@ export function registerMetricsRoutes(getRouter, log) {
   router.get('/dora/time-to-restore',      handle(timeToRestore));
   router.get('/dora/pr-lifetime',          handle(prLifetime));
   router.get('/dora/failed-jobs',          handle(failedJobsBreakdown));
+
+  // ── Workflow Statistics ──────────────────────────────────────────────────────
+  // Rutas completamente independientes de DORA.
+  // Query params: ?days=30  ?repo=owner/repo  ?workflow=CI
+  // Los valores vacíos ("") se tratan como "sin filtro".
+
+  /** Parsea los parámetros de las rutas /workflows/*. */
+  function parseWfParams(req) {
+    const days     = Math.min(Math.max(parseInt(req.query.days ?? '30', 10), 1), 365);
+    const repo     = req.query.repo     || undefined;
+    const workflow = req.query.workflow || undefined;
+    return { days, repo, workflow };
+  }
+
+  // Lista de repos activos → variable "repo" en Grafana
+  router.get('/workflows/repos', async (req, res) => {
+    try {
+      const { days } = parseWfParams(req);
+      res.json(await listRepos(days));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Lista de workflow names → variable "workflow" en Grafana (se filtra por repo si se pasa)
+  router.get('/workflows/names', async (req, res) => {
+    try {
+      const { days, repo } = parseWfParams(req);
+      res.json(await listWorkflows(repo, days));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // KPIs globales (para stat/gauge panels)
+  router.get('/workflows/summary', async (req, res) => {
+    try {
+      const { days, repo, workflow } = parseWfParams(req);
+      res.json(await workflowSummary(repo, workflow, days));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Stats por repo (filtrable por workflow)
+  router.get('/workflows/by-repo', async (req, res) => {
+    try {
+      const { days, workflow } = parseWfParams(req);
+      res.json(await workflowsByRepo(workflow, days));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Stats por workflow name (filtrable por repo)
+  router.get('/workflows/by-name', async (req, res) => {
+    try {
+      const { days, repo } = parseWfParams(req);
+      res.json(await workflowsByName(repo, days));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Tendencia diaria de ejecuciones
+  router.get('/workflows/over-time', async (req, res) => {
+    try {
+      const { days, repo, workflow } = parseWfParams(req);
+      res.json(await workflowsOverTime(repo, workflow, days));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   log.info('[metrics] Routes registered under /metrics');
 }

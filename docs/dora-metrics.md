@@ -2,6 +2,8 @@
 
 Esta guía explica cómo el bot recopila las cuatro métricas DORA (y PR Lifetime como métrica bonus), qué convenciones de nombres **debes seguir** para que los datos lleguen a Grafana, y ejemplos concretos para cada caso.
 
+> Esta guía cubre exclusivamente las métricas DORA. Para estadísticas genéricas de workflows (todos los repos y pipelines) consulta el dashboard **Workflow Statistics** en Grafana (`uid: workflow-stats-v1`) y los endpoints `/metrics/workflows/*`.
+
 ---
 
 ## Cómo fluyen los datos
@@ -245,7 +247,8 @@ El bot valida el título de cada PR con el check **"PR Title Format"**. El forma
 ### Desde la máquina host
 
 ```bash
-# Resumen de los 4 KPIs
+# ── DORA ──────────────────────────────────────────────────────────────────────
+# Resumen de los 4 KPIs DORA
 curl http://localhost:3000/metrics/dora/summary
 
 # Deployment frequency por repo
@@ -256,13 +259,26 @@ curl http://localhost:3000/metrics/dora/change-failure-rate
 
 # Ventana personalizada (últimos 7 días)
 curl "http://localhost:3000/metrics/dora/summary?days=7"
+
+# ── Workflow Statistics (independiente de DORA) ───────────────────────────────
+# KPIs globales de todos los workflows
+curl http://localhost:3000/metrics/workflows/summary
+
+# Lista de repos activos (usado por la variable $repo de Grafana)
+curl http://localhost:3000/metrics/workflows/repos
+
+# Stats por workflow name en un repo concreto
+curl "http://localhost:3000/metrics/workflows/by-name?repo=owner/mi-repo"
+
+# Tendencia diaria de los últimos 7 días
+curl "http://localhost:3000/metrics/workflows/over-time?days=7"
 ```
 
 ### Desde dentro del contenedor de Grafana
 
 ```bash
 docker exec probot_grafana wget -qO- http://probot:3000/metrics/dora/summary
-docker exec probot_grafana wget -qO- http://probot:3000/metrics/dora/deployment-frequency
+docker exec probot_grafana wget -qO- http://probot:3000/metrics/workflows/summary
 ```
 
 ### Consultar MongoDB directamente
@@ -295,3 +311,5 @@ docker exec probot_mongo mongosh probot_metrics --eval \
 - [ ] Los PRs siguen el formato `[TIPO] Descripción [TICKET-NNN]`
 - [ ] Los incidentes se gestionan como Issues con la etiqueta `incident`
 - [ ] Los PRs de corrección de incidentes llevan la etiqueta `fix`
+- [ ] Grafana muestra el dashboard **DORA Metrics** (`uid: dora-metrics-v1`) con datos reales
+- [ ] Grafana muestra el dashboard **Workflow Statistics** (`uid: workflow-stats-v1`) — no requiere configuración adicional, usa los mismos datos de `checksuites`

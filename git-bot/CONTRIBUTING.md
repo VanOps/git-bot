@@ -1,39 +1,104 @@
-## Contributing
+## Contribuir a git-bot
 
-[fork]: /fork
-[pr]: /compare
-[code-of-conduct]: CODE_OF_CONDUCT.md
+¡Gracias por tu interés en contribuir! Este documento explica cómo preparar el entorno, ejecutar los tests y enviar cambios.
 
-Hi there! We're thrilled that you'd like to contribute to this project. Your help is essential for keeping it great.
+---
 
-Please note that this project is released with a [Contributor Code of Conduct][code-of-conduct]. By participating in this project you agree to abide by its terms.
+### Código de conducta
 
-## Issues and PRs
+Este proyecto sigue el [Contributor Code of Conduct](CODE_OF_CONDUCT.md). Al participar, aceptas sus términos.
 
-If you have suggestions for how this project could be improved, or want to report a bug, open an issue! We'd love all and any contributions. If you have questions, too, we'd love to hear them.
+---
 
-We'd also love PRs. If you're thinking of a large PR, we advise opening up an issue first to talk about it, though! Look at the links below if you're not sure how to open a PR.
+### Entorno de desarrollo
 
-## Submitting a pull request
+**Requisitos:**
 
-1. [Fork][fork] and clone the repository.
-1. Configure and install the dependencies: `npm install`.
-1. Make sure the tests pass on your machine: `npm test`, note: these tests also apply the linter, so there's no need to lint separately.
-1. Create a new branch: `git checkout -b my-branch-name`.
-1. Make your change, add tests, and make sure the tests still pass.
-1. Push to your fork and [submit a pull request][pr].
-1. Pat your self on the back and wait for your pull request to be reviewed and merged.
+- Node.js ≥ 18 (`node -v`)
+- Docker + Docker Compose (para MongoDB local)
+- Una cuenta GitHub con una GitHub App registrada (ver [README](../README.md#github-app--configuración))
 
-Here are a few things you can do that will increase the likelihood of your pull request being accepted:
+**Setup inicial:**
 
-- Write and update tests.
-- Keep your changes as focused as possible. If there are multiple changes you would like to make that are not dependent upon each other, consider submitting them as separate pull requests.
-- Write a [good commit message](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
+```bash
+git clone <repo>
+cd git-bot/git-bot
+npm install
+cp .env.example .env
+# Editar .env con tus credenciales de GitHub App
+```
 
-Work in Progress pull requests are also welcome to get feedback early on, or if there is something blocked you.
+**Arrancar solo MongoDB:**
 
-## Resources
+```bash
+# Desde la raíz del repo
+docker compose up mongo -d
+```
 
-- [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
-- [Using Pull Requests](https://help.github.com/articles/about-pull-requests/)
-- [GitHub Help](https://help.github.com)
+**Arrancar el bot:**
+
+```bash
+# Desde git-bot/
+node index.js
+# o con hot-reload:
+npx nodemon --watch src --watch index.js index.js
+```
+
+---
+
+### Tests
+
+```bash
+npm test
+```
+
+Los tests usan `node --test` (built-in, sin frameworks externos) y levantan su propio servicio MongoDB mediante el CI. Para ejecutarlos localmente necesitas MongoDB corriendo (ver arriba).
+
+Variables de entorno necesarias para los tests:
+
+```env
+DATABASE_URL=mongodb://localhost:27017/probot_test
+LOG_LEVEL=warn
+```
+
+---
+
+### Estructura relevante para contribuciones
+
+| Fichero / carpeta                  | Qué contiene                                               |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `src/handlers/`                    | Listeners de eventos GitHub (check, pullRequest, incident) |
+| `src/models/`                      | Esquemas Mongoose (CheckSuite, CheckRun, Deployment, ...)  |
+| `src/queries/dora.js`              | Aggregations MongoDB para métricas DORA                    |
+| `src/queries/workflows.js`         | Aggregations MongoDB para estadísticas genéricas de workflows |
+| `src/api/metrics.js`               | Rutas REST `/metrics/dora/*` y `/metrics/workflows/*`      |
+| `../grafana/dashboards/dora.json`  | Dashboard Grafana DORA Metrics                             |
+| `../grafana/dashboards/workflows.json` | Dashboard Grafana Workflow Statistics                  |
+| `test/`                            | Tests unitarios e integración                              |
+
+---
+
+### Cómo enviar un Pull Request
+
+1. Haz un fork del repositorio y clónalo localmente.
+2. Crea una rama: `git checkout -b mi-feature`.
+3. Haz tus cambios y añade/actualiza los tests correspondientes.
+4. Verifica que los tests pasan: `npm test`.
+5. Verifica que el título de tu PR cumple el formato del bot: `[TIPO] Descripción [TICKET-NNN]`.
+6. Abre el PR contra `main`.
+
+**Consejos para que el PR sea aceptado:**
+
+- Un PR por cambio funcional. Si tienes varias mejoras independientes, envíalas por separado.
+- Actualiza la documentación en `docs/` si cambias el comportamiento de la API o de los handlers.
+- Si añades un nuevo endpoint en `metrics.js`, documéntalo en el README y en `docs/dora-metrics.md` según corresponda.
+- Si modificas el dashboard de Grafana, exporta el JSON actualizado y reemplaza el fichero en `grafana/dashboards/`.
+
+---
+
+### Recursos
+
+- [Probot docs](https://probot.github.io/docs/)
+- [Grafana Infinity datasource](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/)
+- [Mongoose aggregation](https://mongoosejs.com/docs/api/aggregate.html)
+- [GitHub Webhooks reference](https://docs.github.com/en/webhooks/webhook-events-and-payloads)
