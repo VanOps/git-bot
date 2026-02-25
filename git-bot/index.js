@@ -5,6 +5,7 @@ import { connectDB }                  from './src/db.js';
 import { registerCheckHandlers }       from './src/handlers/check.js';
 import { registerPullRequestHandlers } from './src/handlers/pullRequest.js';
 import { registerIncidentHandlers }    from './src/handlers/incident.js';
+import { registerCommentHandlers }     from './src/handlers/comments.js';
 import { registerMetricsRoutes }       from './src/api/metrics.js';
 
 /**
@@ -23,6 +24,7 @@ export default async (app, { getRouter }) => {
   registerCheckHandlers(app);
   registerPullRequestHandlers(app);
   registerIncidentHandlers(app);
+  registerCommentHandlers(app);
 
   // ── Workflow run / job – structured logging ──────────────────────────────
   app.on('workflow_run', async (context) => {
