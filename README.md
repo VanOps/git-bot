@@ -1,8 +1,8 @@
-# git-bot — DORA Metrics para GitHub Actions
+# git-bot — DORA Metrics & Workflow Statistics para GitHub Actions
 
-GitHub App construida con [Probot](https://probot.github.io) + Node.js 20 que captura métricas DORA (y extras) de todos tus repositorios en tiempo real, persiste en MongoDB y expone queries listos para Grafana.
+GitHub App construida con [Probot](https://probot.github.io) + Node.js 20 que captura métricas DORA y estadísticas genéricas de workflows de todos tus repositorios en tiempo real, persiste en MongoDB y expone una API REST consumida por Grafana mediante el plugin Infinity.
 
-> **Stack**: Probot 13 · Mongoose 8 · MongoDB 7 · Docker Compose · Node ≥ 18 · ISC License
+> **Stack**: Probot 13 · Mongoose 8 · MongoDB 7 · Docker Compose · Grafana 11.4 · Node ≥ 18 · ISC License
 
 ---
 
@@ -12,13 +12,15 @@ GitHub App construida con [Probot](https://probot.github.io) + Node.js 20 que ca
 - [Qué hace](#qué-hace)
 - [Métricas DORA](#métricas-dora)
 - [Modelo de datos](#modelo-de-datos)
+- [API REST](#api-rest)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Inicio rápido](#inicio-rápido)
 - [Docker Compose](#docker-compose)
+- [Grafana](#grafana)
 - [GitHub App — Configuración](#github-app--configuración)
 - [Variables de entorno](#variables-de-entorno)
 - [CI/CD](#cicd)
-- [Queries DORA](#queries-dora)
+- [Queries de referencia](#queries-de-referencia)
 - [License](#license)
 
 ---
@@ -32,24 +34,26 @@ graph TB
     subgraph Docker Compose
         P["Probot App\n:3000"]
         M[("MongoDB 7\n:27017")]
+        G["Grafana 11.4\n:3001"]
         P -- "mongoose upsert" --> M
+        G -- "GET /metrics/*\nInfinity plugin" --> P
     end
 
     subgraph Handlers
-        CH["check.js\ncheck_suite / check_run"]
+        CH["check.js\ncheck_suite / workflow_run"]
         PR["pullRequest.js\nPR title + metrics"]
         IN["incident.js\nissues labeled/closed"]
     end
 
-    GH -- "HMAC signed\nPOST /payload" --> P
-    P --> CH & PR & IN
-
     subgraph Queries
-        DQ["dora.js\naggregations"]
+        DQ["dora.js\naggregations DORA"]
+        WQ["workflows.js\naggregations Workflow Stats"]
     end
 
-    M -- "aggregate()" --> DQ
-    DQ -- "JSON" --> GR["Grafana\n(future)"]
+    GH -- "HMAC signed\nPOST /payload" --> P
+    P --> CH & PR & IN
+    M -- "aggregate()" --> DQ & WQ
+    DQ & WQ -- "JSON\n/metrics/*" --> P
 ```
 
 ---
@@ -58,7 +62,7 @@ graph TB
 
 ### Handlers registrados
 
-| Evento GitHub                         | Acción GitHub API                     | Persistencia DORA                                                             |
+| Evento GitHub                         | Acción GitHub API                     | Persistencia                                                                  |
 | ------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------- |
 | `check_suite.requested`               | `checks.create` "My app!"             | Upsert `checksuites`                                                          |
 | `check_suite.completed`               | —                                     | Update suite + `duration_ms`; si workflow es `deploy*` → upsert `deployments` |
@@ -68,7 +72,7 @@ graph TB
 | `pull_request.closed`                 | —                                     | Upsert `pullrequests` con `lifetime_ms`                                       |
 | `issues.labeled` (`incident`)         | —                                     | Crea registro `incidents` con `labeled_at`                                    |
 | `issues.closed`                       | —                                     | Resuelve incident, calcula `time_to_restore_ms`                               |
-| `workflow_run` / `workflow_job`       | —                                     | Log estructurado DEBUG                                                        |
+| `workflow_run.completed`              | —                                     | Detecta deploys; actualiza `is_deploy` en CheckSuite                          |
 
 ### Flujo de un evento
 
@@ -202,6 +206,40 @@ erDiagram
 
 ---
 
+## API REST
+
+Toda la API corre en `http://probot:3000/metrics` (o `http://localhost:3000/metrics` desde el host).
+
+### DORA Metrics — `/metrics/dora/*`
+
+> Query params: `?days=30` (ventana temporal, 1–365) · `?repo_id=NNN` (filtrar por repo)
+
+| Endpoint                              | Descripción                                          |
+| ------------------------------------- | ---------------------------------------------------- |
+| `GET /metrics/health`                 | Health check                                         |
+| `GET /metrics/dora/summary`           | Los 4 KPIs DORA + bonus en una sola llamada (1 fila) |
+| `GET /metrics/dora/deployment-frequency` | Deploys por repo por día                          |
+| `GET /metrics/dora/lead-time`         | Duración media de suites de deploy por repo          |
+| `GET /metrics/dora/change-failure-rate` | % de suites fallidos por repo                      |
+| `GET /metrics/dora/time-to-restore`   | MTTR por repo (incidentes resueltos)                 |
+| `GET /metrics/dora/pr-lifetime`       | Tiempo medio de vida de PRs mergeados por repo       |
+| `GET /metrics/dora/failed-jobs`       | Top 20 jobs con más fallos                           |
+
+### Workflow Statistics — `/metrics/workflows/*`
+
+> Query params: `?days=30` · `?repo=owner/repo` · `?workflow=CI` (todos opcionales)
+
+| Endpoint                          | Descripción                                                  |
+| --------------------------------- | ------------------------------------------------------------ |
+| `GET /metrics/workflows/repos`    | Lista de repos activos (para variable Grafana)               |
+| `GET /metrics/workflows/names`    | Lista de workflow names, opcionalmente filtrada por repo      |
+| `GET /metrics/workflows/summary`  | KPIs globales: total, éxito, fallos, duración media (1 fila) |
+| `GET /metrics/workflows/by-repo`  | Stats agrupadas por repo (filtrable por workflow)            |
+| `GET /metrics/workflows/by-name`  | Stats agrupadas por workflow name (filtrable por repo)       |
+| `GET /metrics/workflows/over-time`| Tendencia diaria: total / success / failed por día           |
+
+---
+
 ## Estructura del proyecto
 
 ```
@@ -209,15 +247,26 @@ git-bot/                         ← raíz del repositorio
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml               ← tests + docker build + compose validate
+│       ├── deploy.yaml          ← build & push a ghcr.io
 │       ├── ai-disclosure.yaml   ← EU AI Act Art.50 auto-update
 │       └── ci-ai-compliance.yaml
-├── docker-compose.yml           ← probot + mongo (volúmenes persistentes)
+├── docker-compose.yml           ← probot + mongo + grafana (volúmenes persistentes)
 ├── docs/
-│   ├── probot.md
-│   └── use-cases.md
+│   ├── dora-metrics.md          ← guía de configuración de métricas DORA
+│   ├── probot.md                ← referencia del framework Probot
+│   └── use-cases.md             ← casos de uso del bot
+├── grafana/
+│   ├── dashboards/
+│   │   ├── dora.json            ← dashboard DORA Metrics (15 paneles)
+│   │   └── workflows.json       ← dashboard Workflow Statistics (11 paneles)
+│   └── provisioning/
+│       ├── dashboards/
+│       │   └── provider.yml     ← provisioner de ficheros de dashboard
+│       └── datasources/
+│           └── infinity.yml     ← datasource Infinity → Probot API
 └── git-bot/                     ← código de la app
     ├── Dockerfile               ← node:20-slim, npm ci --production
-    ├── index.js                 ← entry point (probot run ./index.js)
+    ├── index.js                 ← entry point
     ├── package.json             ← probot@13 + mongoose@8
     ├── app.yml                  ← permisos y eventos del GitHub App
     ├── .env.example
@@ -230,11 +279,14 @@ git-bot/                         ← raíz del repositorio
         │   ├── Deployment.js
         │   └── Incident.js
         ├── handlers/
-        │   ├── check.js         ← check_suite.* + check_run.*
+        │   ├── check.js         ← check_suite.* + workflow_run.*
         │   ├── pullRequest.js   ← PR title check + pull_request.closed
         │   └── incident.js      ← issues.labeled/closed + fix PR linking
-        └── queries/
-            └── dora.js          ← 7 funciones de agregación DORA
+        ├── queries/
+        │   ├── dora.js          ← 7 funciones de agregación DORA
+        │   └── workflows.js     ← 6 funciones de agregación Workflow Stats
+        └── api/
+            └── metrics.js       ← rutas REST /metrics/dora/* y /metrics/workflows/*
 ```
 
 ---
@@ -244,7 +296,7 @@ git-bot/                         ← raíz del repositorio
 ### Requisitos
 
 - Node.js ≥ 18
-- Docker + Docker Compose (para MongoDB local)
+- Docker + Docker Compose
 - Cuenta GitHub + GitHub App creada
 
 ### 1. Clonar e instalar
@@ -279,7 +331,7 @@ LOG_LEVEL=debug
 docker compose up mongo -d
 ```
 
-### 4. Arrancar el bot en modo dev (hot-reload)
+### 4. Arrancar el bot en modo dev
 
 ```bash
 cd git-bot
@@ -290,7 +342,7 @@ npx nodemon --watch src --watch index.js index.js
 
 ## Docker Compose
 
-Levanta la stack completa (probot + mongo) desde la raíz del repo:
+Levanta la stack completa desde la raíz del repo:
 
 ```bash
 docker compose up --build
@@ -301,31 +353,50 @@ graph LR
     subgraph docker-compose
         M["mongo:7\n:27017\nvolumen persistente"]
         P["probot app\n:3000"]
-        G["grafana:11\n:3001"]
+        G["grafana 11.4\n:3001"]
         P -- "DATABASE_URL" --> M
-        G -- "GET /metrics/dora/*" --> P
+        G -- "GET /metrics/*" --> P
     end
-    HOST["localhost"] -- ":3000 webhook" --> P
-    HOST -- ":3001 dashboard" --> G
+    HOST["localhost"] -- ":3000 webhook / API" --> P
+    HOST -- ":3001 dashboards" --> G
     HOST -- ":27017 mongosh" --> M
 ```
 
-| Servicio  | Imagen                  | Puerto | Volumen                             |
-| --------- | ----------------------- | ------ | ----------------------------------- |
-| `mongo`   | `mongo:7`               | 27017  | `mongo_data:/data/db`               |
-| `probot`  | `./git-bot` (build)     | 3000   | `./git-bot/private-key.pem` (ro)    |
-| `grafana` | `grafana/grafana-oss:11.4` | 3001  | `grafana_data:/var/lib/grafana`     |
+| Servicio  | Imagen                      | Puerto | Volumen                          |
+| --------- | --------------------------- | ------ | -------------------------------- |
+| `mongo`   | `mongo:7`                   | 27017  | `mongo_data:/data/db`            |
+| `probot`  | `./git-bot` (build local)   | 3000   | `./git-bot/private-key.pem` (ro) |
+| `grafana` | `grafana/grafana-oss:11.4.0` | 3001  | `grafana_data:/var/lib/grafana`  |
 
-El servicio `probot` arranca solo cuando `mongo` supera su healthcheck. Grafana arranca después de `probot` y consulta su API `/metrics/dora/*` vía el plugin **Infinity** (OSS, sin licencia Enterprise).
+El servicio `probot` arranca solo cuando `mongo` supera su healthcheck. Grafana arranca después de `probot` y consulta su API vía el plugin **Infinity** (OSS, sin licencia Enterprise).
 
-### Grafana
+---
+
+## Grafana
 
 Abre **http://localhost:3001** · usuario `admin` · password en `GRAFANA_PASSWORD` (default: `admin`).
 
-El dashboard **DORA Metrics – git-bot** se provisiona automáticamente con:
-- 4 paneles KPI en la cabecera (stat + gauge) con colores DORA Elite/High/Medium/Low
-- Tablas detalladas por repo (Deployment Freq, Lead Time, CFR, MTTR, PR Lifetime, Failed Jobs)
-- Variable `$days` (7 / 30 / 60 / 90 / 180 días) para cambiar la ventana temporal
+Los dashboards se provisionan automáticamente al arrancar el contenedor. No requieren configuración manual.
+
+### Dashboard 1 — DORA Metrics
+
+UID: `dora-metrics-v1`
+
+- 4 paneles KPI (stat + gauge) con colores Elite/High/Medium/Low
+- Tablas detalladas por repo: Deployment Frequency, Lead Time, CFR, MTTR, PR Lifetime, Failed Jobs
+- Variable `$days` (7 / 30 / 60 / 90 / 180 días)
+
+### Dashboard 2 — Workflow Statistics
+
+UID: `workflow-stats-v1`
+
+Dashboard genérico e independiente de DORA que muestra la actividad de **todos los workflows** de **todos los repos**:
+
+- 4 paneles KPI: Total ejecuciones · Tasa de éxito % · Duración media · Ejecuciones fallidas
+- Barras + tabla por repositorio
+- Barras + tabla por nombre de workflow
+- Time series de tendencia diaria (total / exitosas / fallidas)
+- Variables de filtro: `$repo` (dropdown dinámico) · `$workflow` (dependiente del repo seleccionado) · `$days`
 
 ```bash
 # Solo Grafana (si ya tienes probot+mongo corriendo)
@@ -412,60 +483,32 @@ flowchart TD
 | `docker-build`     | `test`          | Imagen buildea sin errores (`npm ci --production`) |
 | `compose-validate` | —               | Sintaxis correcta del `docker-compose.yml`         |
 
+El workflow [`.github/workflows/deploy.yaml`](.github/workflows/deploy.yaml) publica la imagen en `ghcr.io` en cada push a `main`.
+
 ---
 
-## Queries DORA
+## Queries de referencia
 
 ```bash
 mongosh mongodb://localhost:27017/probot_metrics
 ```
 
-### Deployment Frequency
+### DORA — Deployment Frequency
 
 ```js
 db.deployments.aggregate([
   { $match: { conclusion: "success" } },
   {
     $group: {
-      _id: {
-        repo: "$repo_full_name",
-        day: { $dateToString: { format: "%Y-%m-%d", date: "$deployed_at" } },
-      },
+      _id: { repo: "$repo_full_name", day: { $dateToString: { format: "%Y-%m-%d", date: "$deployed_at" } } },
       n: { $sum: 1 },
     },
   },
-  {
-    $group: {
-      _id: "$_id.repo",
-      total: { $sum: "$n" },
-      avg_per_day: { $avg: "$n" },
-    },
-  },
+  { $group: { _id: "$_id.repo", total: { $sum: "$n" }, avg_per_day: { $avg: "$n" } } },
 ]);
 ```
 
-### Lead Time for Changes
-
-```js
-db.checksuites.aggregate([
-  {
-    $match: {
-      is_deploy: true,
-      conclusion: "success",
-      duration_ms: { $ne: null },
-    },
-  },
-  {
-    $group: {
-      _id: "$repo_full_name",
-      avg_min: { $avg: { $divide: ["$duration_ms", 60000] } },
-      count: { $sum: 1 },
-    },
-  },
-]);
-```
-
-### Change Failure Rate
+### DORA — Change Failure Rate
 
 ```js
 db.checksuites.aggregate([
@@ -474,52 +517,48 @@ db.checksuites.aggregate([
     $group: {
       _id: "$repo_full_name",
       total: { $sum: 1 },
-      failed: {
-        $sum: {
-          $cond: [{ $in: ["$conclusion", ["failure", "timed_out"]] }, 1, 0],
-        },
-      },
+      failed: { $sum: { $cond: [{ $in: ["$conclusion", ["failure", "timed_out"]] }, 1, 0] } },
     },
   },
+  { $project: { cfr_pct: { $multiply: [{ $divide: ["$failed", "$total"] }, 100] } } },
+]);
+```
+
+### Workflow Stats — Resumen global
+
+```js
+db.checksuites.aggregate([
+  { $match: { status: "completed" } },
   {
-    $project: {
-      cfr_pct: { $multiply: [{ $divide: ["$failed", "$total"] }, 100] },
+    $group: {
+      _id: null,
+      total: { $sum: 1 },
+      success: { $sum: { $cond: [{ $eq: ["$conclusion", "success"] }, 1, 0] } },
+      failed: { $sum: { $cond: [{ $in: ["$conclusion", ["failure", "timed_out", "action_required"]] }, 1, 0] } },
+      avg_duration_min: { $avg: { $divide: ["$duration_ms", 60000] } },
     },
   },
 ]);
 ```
 
-### Time to Restore (MTTR)
+### Workflow Stats — Por repo
 
 ```js
-db.incidents.aggregate([
-  { $match: { resolved_at: { $ne: null } } },
+db.checksuites.aggregate([
+  { $match: { status: "completed" } },
   {
     $group: {
       _id: "$repo_full_name",
-      avg_ttr_h: { $avg: { $divide: ["$time_to_restore_ms", 3600000] } },
-      count: { $sum: 1 },
+      total: { $sum: 1 },
+      success: { $sum: { $cond: [{ $eq: ["$conclusion", "success"] }, 1, 0] } },
     },
   },
+  { $project: { repo: "$_id", _id: 0, total: 1, success_rate_pct: { $multiply: [{ $divide: ["$success", "$total"] }, 100] } } },
+  { $sort: { total: -1 } },
 ]);
 ```
 
-### PR Lifetime
-
-```js
-db.pullrequests.aggregate([
-  { $match: { merged_at: { $ne: null } } },
-  {
-    $group: {
-      _id: "$repo_full_name",
-      avg_h: { $avg: { $divide: ["$lifetime_ms", 3600000] } },
-      prs: { $sum: 1 },
-    },
-  },
-]);
-```
-
-> Las mismas queries están disponibles como funciones exportables en [`git-bot/src/queries/dora.js`](git-bot/src/queries/dora.js) para usar desde Node o preparar un dashboard de Grafana.
+> Las queries completas están disponibles como funciones exportables en [`git-bot/src/queries/dora.js`](git-bot/src/queries/dora.js) y [`git-bot/src/queries/workflows.js`](git-bot/src/queries/workflows.js).
 
 ---
 

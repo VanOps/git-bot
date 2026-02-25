@@ -1,0 +1,744 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["workflows", "ci", "github-actions", "probot"],
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Workflow Statistics – git-bot",
+  "uid": "workflow-stats-v1",
+  "version": 1,
+
+  "templating": {
+    "list": [
+      {
+        "name": "days",
+        "label": "Ventana (días)",
+        "type": "custom",
+        "current": { "text": "30", "value": "30" },
+        "options": [
+          { "text": "7",   "value": "7"   },
+          { "text": "30",  "value": "30",  "selected": true },
+          { "text": "60",  "value": "60"  },
+          { "text": "90",  "value": "90"  },
+          { "text": "180", "value": "180" }
+        ],
+        "query": "7,30,60,90,180",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false
+      },
+      {
+        "name": "repo",
+        "label": "Repositorio",
+        "type": "query",
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "infinity-dora"
+        },
+        "definition": "http://probot:3000/metrics/workflows/repos",
+        "query": {
+          "refId": "StandardVariableQuery",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/repos?days=${days}",
+          "root_selector": "",
+          "columns": [
+            { "selector": "repo", "text": "repo", "type": "string" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" },
+          "format": "table"
+        },
+        "current": {},
+        "options": [],
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": "",
+        "multi": false,
+        "hide": 0,
+        "sort": 1
+      },
+      {
+        "name": "workflow",
+        "label": "Workflow",
+        "type": "query",
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "infinity-dora"
+        },
+        "definition": "http://probot:3000/metrics/workflows/names",
+        "query": {
+          "refId": "StandardVariableQuery",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/names?days=${days}&repo=${repo}",
+          "root_selector": "",
+          "columns": [
+            { "selector": "workflow", "text": "workflow", "type": "string" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" },
+          "format": "table"
+        },
+        "current": {},
+        "options": [],
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": "",
+        "multi": false,
+        "hide": 0,
+        "sort": 1
+      }
+    ]
+  },
+
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 2 },
+      "options": {
+        "mode": "markdown",
+        "content": "## Workflow Statistics  •  últimos `$days` días\nTodos los workflows de GitHub Actions · filtrado por **repo**: `$repo` · **workflow**: `$workflow`"
+      }
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total de ejecuciones",
+      "description": "Número total de check suites completados en el período",
+      "gridPos": { "x": 0, "y": 2, "w": 6, "h": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          },
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^total_runs$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/summary?days=${days}&repo=${repo}&workflow=${workflow}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "total_runs",   "text": "total_runs",   "type": "number" },
+            { "selector": "success_runs", "text": "success_runs", "type": "number" },
+            { "selector": "failed_runs",  "text": "failed_runs",  "type": "number" },
+            { "selector": "success_rate_pct", "text": "success_rate_pct", "type": "number" },
+            { "selector": "avg_duration_min", "text": "avg_duration_min", "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "type": "gauge",
+      "title": "Tasa de éxito (%)",
+      "description": "Porcentaje de ejecuciones con conclusión success",
+      "gridPos": { "x": 6, "y": 2, "w": 6, "h": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "orange", "value": 70   },
+              { "color": "yellow", "value": 85   },
+              { "color": "green",  "value": 95   }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^success_rate_pct$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/summary?days=${days}&repo=${repo}&workflow=${workflow}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "success_rate_pct", "text": "success_rate_pct", "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Duración media (min)",
+      "description": "Tiempo medio de ejecución de los workflows completados",
+      "gridPos": { "x": 12, "y": 2, "w": 6, "h": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "yellow", "value": 15   },
+              { "color": "orange", "value": 30   },
+              { "color": "red",    "value": 60   }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^avg_duration_min$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/summary?days=${days}&repo=${repo}&workflow=${workflow}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "avg_duration_min", "text": "avg_duration_min", "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Ejecuciones fallidas",
+      "description": "Total de suites con conclusión failure / timed_out / action_required",
+      "gridPos": { "x": 18, "y": 2, "w": 6, "h": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "yellow", "value": 1    },
+              { "color": "orange", "value": 10   },
+              { "color": "red",    "value": 50   }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "/^failed_runs$/",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/summary?days=${days}&repo=${repo}&workflow=${workflow}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "failed_runs", "text": "failed_runs", "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Por Repositorio",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 7, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 6,
+      "type": "barchart",
+      "title": "Ejecuciones por repo",
+      "description": "Total de runs completados por repositorio en el período",
+      "gridPos": { "x": 0, "y": 8, "w": 14, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "failed_runs" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "success_runs" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "repo",
+        "barWidth": 0.7,
+        "groupWidth": 0.7,
+        "stacking": "none",
+        "showValue": "auto",
+        "fillOpacity": 80,
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/by-repo?days=${days}&workflow=${workflow}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "repo",         "text": "repo",         "type": "string" },
+            { "selector": "total_runs",   "text": "total_runs",   "type": "number" },
+            { "selector": "success_runs", "text": "success_runs", "type": "number" },
+            { "selector": "failed_runs",  "text": "failed_runs",  "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Estadísticas por repositorio",
+      "gridPos": { "x": 14, "y": 8, "w": 10, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "repo" },
+            "properties": [
+              { "id": "displayName", "value": "Repositorio" },
+              { "id": "custom.width", "value": 180 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "total_runs" },
+            "properties": [{ "id": "displayName", "value": "Total" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "success_runs" },
+            "properties": [{ "id": "displayName", "value": "Exitosas" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "failed_runs" },
+            "properties": [
+              { "id": "displayName", "value": "Fallidas" },
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green",  "value": null },
+                    { "color": "yellow", "value": 1    },
+                    { "color": "red",    "value": 10   }
+                  ]
+                }
+              },
+              { "id": "color", "value": { "mode": "thresholds" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "success_rate_pct" },
+            "properties": [
+              { "id": "displayName", "value": "Éxito %" },
+              { "id": "unit", "value": "percent" },
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red",    "value": null },
+                    { "color": "yellow", "value": 70   },
+                    { "color": "green",  "value": 95   }
+                  ]
+                }
+              },
+              { "id": "color", "value": { "mode": "thresholds" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "avg_duration_min" },
+            "properties": [
+              { "id": "displayName", "value": "Duración media (min)" },
+              { "id": "unit", "value": "m" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [{ "displayName": "Total", "desc": true }],
+        "footer": { "show": false }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/by-repo?days=${days}&workflow=${workflow}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "repo",             "text": "repo",             "type": "string" },
+            { "selector": "total_runs",        "text": "total_runs",        "type": "number" },
+            { "selector": "success_runs",      "text": "success_runs",      "type": "number" },
+            { "selector": "failed_runs",       "text": "failed_runs",       "type": "number" },
+            { "selector": "success_rate_pct",  "text": "success_rate_pct",  "type": "number" },
+            { "selector": "avg_duration_min",  "text": "avg_duration_min",  "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Por Workflow",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 17, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "Ejecuciones por workflow",
+      "description": "Total de runs completados por nombre de workflow en el período",
+      "gridPos": { "x": 0, "y": 18, "w": 14, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "failed_runs" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "success_runs" },
+            "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xField": "workflow",
+        "barWidth": 0.7,
+        "groupWidth": 0.7,
+        "stacking": "none",
+        "showValue": "auto",
+        "fillOpacity": 80,
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/by-name?days=${days}&repo=${repo}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "workflow",     "text": "workflow",     "type": "string" },
+            { "selector": "total_runs",   "text": "total_runs",   "type": "number" },
+            { "selector": "success_runs", "text": "success_runs", "type": "number" },
+            { "selector": "failed_runs",  "text": "failed_runs",  "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Estadísticas por workflow",
+      "gridPos": { "x": 14, "y": 18, "w": 10, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "workflow" },
+            "properties": [
+              { "id": "displayName", "value": "Workflow" },
+              { "id": "custom.width", "value": 160 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "total_runs" },
+            "properties": [{ "id": "displayName", "value": "Total" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "success_runs" },
+            "properties": [{ "id": "displayName", "value": "Exitosas" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "failed_runs" },
+            "properties": [
+              { "id": "displayName", "value": "Fallidas" },
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green",  "value": null },
+                    { "color": "yellow", "value": 1    },
+                    { "color": "red",    "value": 10   }
+                  ]
+                }
+              },
+              { "id": "color", "value": { "mode": "thresholds" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "success_rate_pct" },
+            "properties": [
+              { "id": "displayName", "value": "Éxito %" },
+              { "id": "unit", "value": "percent" },
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red",    "value": null },
+                    { "color": "yellow", "value": 70   },
+                    { "color": "green",  "value": 95   }
+                  ]
+                }
+              },
+              { "id": "color", "value": { "mode": "thresholds" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "avg_duration_min" },
+            "properties": [
+              { "id": "displayName", "value": "Duración media (min)" },
+              { "id": "unit", "value": "m" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "sortBy": [{ "displayName": "Total", "desc": true }],
+        "footer": { "show": false }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/by-name?days=${days}&repo=${repo}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "workflow",         "text": "workflow",         "type": "string" },
+            { "selector": "total_runs",        "text": "total_runs",        "type": "number" },
+            { "selector": "success_runs",      "text": "success_runs",      "type": "number" },
+            { "selector": "failed_runs",       "text": "failed_runs",       "type": "number" },
+            { "selector": "success_rate_pct",  "text": "success_rate_pct",  "type": "number" },
+            { "selector": "avg_duration_min",  "text": "avg_duration_min",  "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Tendencia Diaria",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Ejecuciones por día",
+      "description": "Evolución diaria del total de runs, exitosos y fallidos",
+      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "spanNulls": false,
+            "showPoints": "auto",
+            "pointSize": 5
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "total" },
+            "properties": [
+              { "id": "displayName", "value": "Total" },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "success" },
+            "properties": [
+              { "id": "displayName", "value": "Exitosas" },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "failed" },
+            "properties": [
+              { "id": "displayName", "value": "Fallidas" },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "transformations": [
+        {
+          "id": "convertFieldTypes",
+          "options": {
+            "conversions": [
+              { "fieldName": "date", "destinationType": "time" }
+            ]
+          }
+        }
+      ],
+      "targets": [
+        {
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "infinity-dora" },
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "http://probot:3000/metrics/workflows/over-time?days=${days}&repo=${repo}&workflow=${workflow}",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            { "selector": "date",    "text": "date",    "type": "string" },
+            { "selector": "total",   "text": "total",   "type": "number" },
+            { "selector": "success", "text": "success", "type": "number" },
+            { "selector": "failed",  "text": "failed",  "type": "number" }
+          ],
+          "parser": "backend",
+          "url_options": { "method": "GET", "data": "" }
+        }
+      ]
+    }
+
+  ]
+}

@@ -1,5 +1,7 @@
 # Casos de Uso de Probot: Ejemplos Reales y Prácticos
 
+> **Este proyecto** es un ejemplo real de Probot que captura métricas DORA y estadísticas de workflows de GitHub Actions, las persiste en MongoDB y las expone vía API REST para Grafana. Ver [README](../README.md) para detalles de arquitectura y configuración.
+
 Probot se usa principalmente para crear GitHub Apps que responden a eventos como issues, PRs o pushes, automatizando tareas repetitivas en repositorios. Aquí tienes múltiples ejemplos reales y prácticos, muchos open-source y listos para instalar en tu repo. [github](https://github.com/probot/probot)
 
 ## Ejemplos Populares
