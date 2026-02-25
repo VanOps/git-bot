@@ -1,88 +1,77 @@
-import nock from "nock";
-// Requiring our app implementation
-import myProbotApp from "../index.js";
-import { Probot, ProbotOctokit } from "probot";
-// Requiring our fixtures
-//import checkSuitePayload from "./fixtures/check_suite.requested" with { type: "json" };
-//import checkRunSuccess from "./fixtures/check_run.created" with { type: "json" };
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { describe, beforeEach, test } from 'node:test';
+import assert from 'node:assert';
 
-import { describe, beforeEach, afterEach, test } from "node:test";
-import assert from "node:assert";
+import { registerCheckHandlers } from '../src/handlers/check.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-const privateKey = fs.readFileSync(
-  path.join(__dirname, "fixtures/mock-cert.pem"),
-  "utf-8",
-);
+function makeApp() {
+  const handlers = {};
+  return {
+    _handlers: handlers,
+    on(event, fn) { handlers[event] = fn; },
+    log: { info: () => {}, error: () => {}, debug: () => {}, warn: () => {} },
+  };
+}
 
-const checkSuitePayload = JSON.parse(
-  fs.readFileSync(
-    path.join(__dirname, "fixtures/check_suite.requested.json"),
-    "utf-8",
-  ),
-);
+function makeCheckSuiteContext(sha = 'abc123def456', branch = 'main') {
+  let capturedCall = null;
+  return {
+    payload: {
+      check_suite: {
+        id: 1,
+        head_sha: sha,
+        head_branch: branch,
+        status: 'requested',
+        conclusion: null,
+        pull_requests: [],
+      },
+      repository: {
+        id: 100,
+        name: 'testing-things',
+        full_name: 'hiimbex/testing-things',
+        owner: { login: 'hiimbex' },
+      },
+      installation: { id: 2 },
+    },
+    repo(params) {
+      return { owner: 'hiimbex', repo: 'testing-things', ...params };
+    },
+    octokit: {
+      checks: {
+        async create(params) {
+          capturedCall = params;
+          return {};
+        },
+      },
+    },
+    _getCaptured() { return capturedCall; },
+  };
+}
 
-const checkRunSuccess = JSON.parse(
-  fs.readFileSync(
-    path.join(__dirname, "fixtures/check_run.created.json"),
-    "utf-8",
-  ),
-);
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("My Probot app", () => {
-  let probot;
+describe('My Probot app', () => {
+  let app;
 
   beforeEach(() => {
-    nock.disableNetConnect();
-    probot = new Probot({
-      appId: 123,
-      privateKey,
-      // disable request throttling and retries for testing
-      Octokit: ProbotOctokit.defaults({
-        retry: { enabled: false },
-        throttle: { enabled: false },
-      }),
-    });
-    // Load our app into probot
-    probot.load(myProbotApp);
+    app = makeApp();
+    registerCheckHandlers(app);
   });
 
-  test("creates a passing check", async () => {
-    const mock = nock("https://api.github.com")
-      .post("/app/installations/2/access_tokens")
-      .reply(200, {
-        token: "test",
-        permissions: {
-          checks: "write",
-        },
-      })
+  test('creates a passing check on check_suite.requested', async () => {
+    const ctx = makeCheckSuiteContext('deadbeef1234', 'main');
 
-      .post("/repos/hiimbex/testing-things/check-runs", (body) => {
-        body.started_at = "2018-10-05T17:35:21.594Z";
-        body.completed_at = "2018-10-05T17:35:53.683Z";
-        assert.deepStrictEqual(body, checkRunSuccess);
-        return true;
-      })
-      .reply(200);
+    await app._handlers['check_suite.requested'](ctx);
 
-    // Receive a webhook event
-    await probot.receive({ name: "check_suite", payload: checkSuitePayload });
-
-    assert.deepStrictEqual(mock.pendingMocks(), []);
-  });
-
-  afterEach(() => {
-    nock.cleanAll();
-    nock.enableNetConnect();
+    const call = ctx._getCaptured();
+    assert.ok(call, 'Se esperaba una llamada a checks.create');
+    assert.strictEqual(call.name, 'My app!');
+    assert.strictEqual(call.conclusion, 'success');
+    assert.strictEqual(call.status, 'completed');
+    assert.strictEqual(call.head_sha, 'deadbeef1234');
+    assert.strictEqual(call.head_branch, 'main');
+    assert.strictEqual(call.output.title, 'Probot check!');
+    assert.strictEqual(call.output.summary, 'The check has passed!');
   });
 });
-
-// For more information about testing with Jest see:
-// https://facebook.github.io/jest/
-
-// For more information about testing with Nock see:
-// https://github.com/nock/nock

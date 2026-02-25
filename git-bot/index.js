@@ -1,12 +1,14 @@
 // Checks API + DORA Metrics – Probot entry point
 // See: https://developer.github.com/v3/checks/
 
-import { connectDB }                  from './src/db.js';
-import { registerCheckHandlers }       from './src/handlers/check.js';
-import { registerPullRequestHandlers } from './src/handlers/pullRequest.js';
-import { registerIncidentHandlers }    from './src/handlers/incident.js';
-import { registerCommentHandlers }     from './src/handlers/comments.js';
-import { registerMetricsRoutes }       from './src/api/metrics.js';
+import { connectDB }                    from './src/db.js';
+import { registerCheckHandlers }         from './src/handlers/check.js';
+import { registerPullRequestHandlers }   from './src/handlers/pullRequest.js';
+import { registerReleaseNotesHandlers }  from './src/handlers/releaseNotes.js';
+import { registerLabelsHandlers }        from './src/handlers/labels.js';
+import { registerIncidentHandlers }      from './src/handlers/incident.js';
+import { registerCommentHandlers }       from './src/handlers/comments.js';
+import { registerMetricsRoutes }         from './src/api/metrics.js';
 
 /**
  * Main Probot app.
@@ -23,6 +25,8 @@ export default async (app, { getRouter }) => {
   // ── Event handlers ──────────────────────────────────────────────────────
   registerCheckHandlers(app);
   registerPullRequestHandlers(app);
+  registerReleaseNotesHandlers(app);
+  registerLabelsHandlers(app);
   registerIncidentHandlers(app);
   registerCommentHandlers(app);
 

@@ -10,6 +10,9 @@ GitHub App construida con [Probot](https://probot.github.io) + Node.js 20 que ca
 
 - [Arquitectura](#arquitectura)
 - [Qué hace](#qué-hace)
+  - [Validación de título de PR](#validación-de-título-de-pr)
+  - [Release Notes Check](#release-notes-check)
+  - [Acciones por label](#acciones-por-label)
 - [Métricas DORA](#métricas-dora)
 - [Modelo de datos](#modelo-de-datos)
 - [API REST](#api-rest)
@@ -70,6 +73,9 @@ graph TB
 | `check_run.rerequested`               | `checks.create` re-check              | —                                                                             |
 | `check_run.completed`                 | —                                     | Upsert `checkruns`                                                            |
 | `pull_request.opened/edited/reopened` | Check título `[TIPO] Desc [JIRA-NNN]` | —                                                                             |
+| `pull_request.opened/edited/reopened/synchronize` | Check `Release Notes` (bloquea si falta sección) | —                                                          |
+| `pull_request.labeled`                | Check `Label: DONTMERGE` → failure    | —                                                                             |
+| `pull_request.unlabeled`              | Check `Label: DONTMERGE` → success    | —                                                                             |
 | `pull_request.closed`                 | —                                     | Upsert `pullrequests` con `lifetime_ms`                                       |
 | `issues.labeled` (`incident`)         | —                                     | Crea registro `incidents` con `labeled_at`                                    |
 | `issues.closed`                       | —                                     | Resuelve incident, calcula `time_to_restore_ms`                               |
@@ -104,6 +110,91 @@ El bot bloquea PRs cuyo título no cumpla el formato:
 ```
 
 Tipos válidos: `FIX` · `FEAT` · `CHORE` · `DOCS` · `REFACTOR` · `TEST`
+
+---
+
+### Release Notes Check
+
+> **Archivo:** [`src/handlers/releaseNotes.js`](git-bot/src/handlers/releaseNotes.js)
+
+El bot **bloquea el merge** de cualquier PR que no incluya una sección `## Release Notes` con al menos una línea de contenido en el cuerpo de la descripción.
+
+El check se evalúa cada vez que se **abre, edita, reabre o recibe nuevos commits** el PR.
+
+#### Formato requerido en la descripción del PR
+
+```markdown
+## Release Notes
+- Descripción del cambio visible para el usuario final.
+```
+
+#### Comportamiento del check
+
+| Situación | Check Run | Merge |
+|---|---|---|
+| Sección presente con contenido | `✅ Release notes presentes` · `success` | Permitido |
+| Sección ausente o vacía | `❌ Release notes requeridas` · `failure` | **Bloqueado** |
+
+El check run aparece en GitHub junto al resto de status checks del PR.
+
+#### Configuración
+
+| Variable de entorno | Default | Descripción |
+|---|---|---|
+| `RELEASE_NOTES_HEADER` | `## Release Notes` | Encabezado Markdown a buscar |
+| `RELEASE_NOTES_REQUIRED` | `true` | Pon `false` para desactivar el check |
+
+---
+
+### Acciones por label
+
+> **Archivo:** [`src/handlers/labels.js`](git-bot/src/handlers/labels.js)
+
+El bot ejecuta acciones automáticas cuando se añaden o retiran etiquetas (labels) de un PR. El sistema de reglas es extensible: añadir soporte para una nueva label solo requiere agregar una entrada al mapa `LABEL_RULES` en el handler.
+
+#### Label `DONTMERGE` — bloqueo manual
+
+Aplica la etiqueta **`DONTMERGE`** a un PR para impedirle el merge aunque el resto de checks estén en verde. Retira la etiqueta para desbloquearlo.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Se añade label DONTMERGE                               │
+│  → Check "Label: DONTMERGE" = failure  → merge BLOQUEADO│
+│                                                          │
+│  Se retira label DONTMERGE                              │
+│  → Check "Label: DONTMERGE" = success  → merge LIBRE    │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Acción sobre la label | Check Run | Merge |
+|---|---|---|
+| Label añadida | `🚫 Merge bloqueado — etiqueta DONTMERGE` · `failure` | **Bloqueado** |
+| Label retirada | `✅ Bloqueo por DONTMERGE retirado` · `success` | Permitido |
+
+La comparación de la label es **case-insensitive** (`DONTMERGE`, `dontmerge` y `DontMerge` funcionan igual). Las labels que no estén registradas son ignoradas.
+
+#### Configuración
+
+| Variable de entorno | Default | Descripción |
+|---|---|---|
+| `DONTMERGE_LABEL` | `DONTMERGE` | Nombre de la etiqueta de bloqueo |
+
+#### Añadir nuevas labels
+
+Para registrar una nueva label con acción personalizada, añade una entrada en `LABEL_RULES` dentro de [`src/handlers/labels.js`](git-bot/src/handlers/labels.js):
+
+```javascript
+const LABEL_RULES = {
+  [DONTMERGE_LABEL.toLowerCase()]: { /* … */ },
+
+  // Nueva label: bloquea hasta que un revisor apruebe
+  'needs-review': {
+    checkName: 'Label: needs-review',
+    onAdd:    { conclusion: 'failure', title: '…', summary: '…' },
+    onRemove: { conclusion: 'success', title: '…', summary: '…' },
+  },
+};
+```
 
 ---
 
@@ -457,18 +548,21 @@ docker compose up grafana -d
 
 ## Variables de entorno
 
-| Variable                           | Requerida | Default                                    | Descripción                         |
-| ---------------------------------- | --------- | ------------------------------------------ | ----------------------------------- |
-| `APP_ID`                           | Sí        | —                                          | ID de tu GitHub App                 |
-| `PRIVATE_KEY` / `PRIVATE_KEY_PATH` | Sí        | —                                          | Clave privada RSA                   |
-| `WEBHOOK_SECRET`                   | Sí        | `development`                              | Secret del webhook                  |
-| `WEBHOOK_PROXY_URL`                | Dev       | —                                          | URL smee.io para dev local          |
-| `DATABASE_URL`                     | No        | `mongodb://localhost:27017/probot_metrics` | URI de MongoDB                      |
-| `INCIDENT_LABEL`                   | No        | `incident`                                 | Label que abre un incident          |
-| `LOG_LEVEL`                        | No        | `info`                                     | `trace` · `debug` · `info` · `warn` |
-| `NODE_ENV`                         | No        | —                                          | `production` en Docker              |
-| `GRAFANA_USER`                     | No        | `admin`                                    | Usuario admin de Grafana            |
-| `GRAFANA_PASSWORD`                 | No        | `admin`                                    | Password admin de Grafana           |
+| Variable                           | Requerida | Default                                    | Descripción                                             |
+| ---------------------------------- | --------- | ------------------------------------------ | ------------------------------------------------------- |
+| `APP_ID`                           | Sí        | —                                          | ID de tu GitHub App                                     |
+| `PRIVATE_KEY` / `PRIVATE_KEY_PATH` | Sí        | —                                          | Clave privada RSA                                       |
+| `WEBHOOK_SECRET`                   | Sí        | `development`                              | Secret del webhook                                      |
+| `WEBHOOK_PROXY_URL`                | Dev       | —                                          | URL smee.io para dev local                              |
+| `DATABASE_URL`                     | No        | `mongodb://localhost:27017/probot_metrics` | URI de MongoDB                                          |
+| `INCIDENT_LABEL`                   | No        | `incident`                                 | Label que abre un incident                              |
+| `RELEASE_NOTES_HEADER`             | No        | `## Release Notes`                         | Encabezado a buscar en el cuerpo del PR                 |
+| `RELEASE_NOTES_REQUIRED`           | No        | `true`                                     | `false` para desactivar el check de release notes       |
+| `DONTMERGE_LABEL`                  | No        | `DONTMERGE`                                | Etiqueta que bloquea el merge de un PR                  |
+| `LOG_LEVEL`                        | No        | `info`                                     | `trace` · `debug` · `info` · `warn`                    |
+| `NODE_ENV`                         | No        | —                                          | `production` en Docker                                  |
+| `GRAFANA_USER`                     | No        | `admin`                                    | Usuario admin de Grafana                                |
+| `GRAFANA_PASSWORD`                 | No        | `admin`                                    | Password admin de Grafana                               |
 
 ---
 
