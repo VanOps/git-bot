@@ -1,8 +1,8 @@
 # AI Content Disclosure (EU AI Act Art.50)
 
-**Last Updated**: 2026-02-25T17:41:06Z
-**Commit**: 52686af879f2d4e4035f089290d7d83c670837ef
-**Workflow Run**: 22408640596
+**Last Updated**: 2026-02-25T18:00:37Z
+**Commit**: 42496f5ef49142d44db8401ad533bb366e4b0b0d
+**Workflow Run**: 22409332168
 
 ## Purpose
 This repository uses AI-assisted code generation for development and maintenance tasks.
@@ -12,20 +12,43 @@ transparency in AI-generated content.
 ## Recent Changes (Last Commit)
 ### Modified files with potential AI assistance:
 
-- git-bot/app.yml
-- git-bot/index.js
-- git-bot/src/handlers/commands/copilot.js
-- git-bot/src/handlers/commands/index.js
-- git-bot/src/handlers/comments.js
+- .github/workflows/deploy.yaml
+- README.md
+- argocd/application.yaml
+- docs/deployment.md
+- helm/Chart.yaml
+- helm/files/dashboards/dora.json
+- helm/files/dashboards/workflows.json
+- helm/templates/configmap-grafana-dashboards.yaml
+- helm/templates/configmap-grafana-datasource.yaml
+- helm/templates/configmap.yaml
+- helm/templates/deployment.yaml
+- helm/templates/ingress.yaml
+- helm/templates/secret.yaml
+- helm/templates/service.yaml
+- helm/values.yaml
+- kubernetes/git-bot/configmap.yaml
+- kubernetes/git-bot/deployment.yaml
+- kubernetes/git-bot/secret.yaml
+- kubernetes/git-bot/service.yaml
+- kubernetes/grafana/configmap-dashboards.yaml
+- kubernetes/grafana/configmap.yaml
+- kubernetes/grafana/deployment.yaml
+- kubernetes/grafana/pvc.yaml
+- kubernetes/grafana/service.yaml
+- kubernetes/kustomization.yaml
+- kubernetes/mongodb/service.yaml
+- kubernetes/mongodb/statefulset.yaml
+- kubernetes/namespace.yaml
 
 ## Repository Overview
 
 ### All code files in repository:
 - `.js` files: 17
-- `.yaml` files: 3
+- `.yaml` files: 26
 - `.yml` files: 5
-- `.json` files: 6
-- `.md` files: 7
+- `.json` files: 8
+- `.md` files: 8
 
 ## Compliance Notes
 
