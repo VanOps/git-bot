@@ -19,6 +19,7 @@ GitHub App construida con [Probot](https://probot.github.io) + Node.js 20 que ca
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Inicio rápido](#inicio-rápido)
 - [Docker Compose](#docker-compose)
+- [Despliegue gratuito (Render + Atlas)](#despliegue-gratuito-render--atlas)
 - [Kubernetes / Helm / ArgoCD](#kubernetes--helm--argocd)
 - [Grafana](#grafana)
 - [GitHub App — Configuración](#github-app--configuración)
@@ -461,6 +462,14 @@ graph LR
 | `grafana` | `grafana/grafana-oss:11.4.0` | 3001  | `grafana_data:/var/lib/grafana`  |
 
 El servicio `probot` arranca solo cuando `mongo` supera su healthcheck. Grafana arranca después de `probot` y consulta su API vía el plugin **Infinity** (OSS, sin licencia Enterprise).
+
+---
+
+## Despliegue gratuito (Render + Atlas)
+
+Para publicar el bot en internet sin coste alguno, consulta la guía en [docs/free-hosting.md](docs/free-hosting.md).
+
+Stack: **Render.com** (Free Web Service) + **MongoDB Atlas** (M0 gratuito) + **UptimeRobot** (keep-alive) + **Grafana Cloud** (dashboards, opcional).
 
 ---
 

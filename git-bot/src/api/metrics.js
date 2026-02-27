@@ -141,20 +141,24 @@ export function registerMetricsRoutes(getRouter, log) {
   }
 
   // Lista de repos activos → variable "repo" en Grafana
+  // Devuelve formato __text__/__value__ que Grafana reconoce universalmente para variables
   router.get('/workflows/repos', async (req, res) => {
     try {
       const { days } = parseWfParams(req);
-      res.json(await listRepos(days));
+      const rows = await listRepos(days);
+      res.json(rows.map(r => ({ text: r.repo, value: r.repo })));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   });
 
   // Lista de workflow names → variable "workflow" en Grafana (se filtra por repo si se pasa)
+  // Devuelve formato __text__/__value__ que Grafana reconoce universalmente para variables
   router.get('/workflows/names', async (req, res) => {
     try {
       const { days, repo } = parseWfParams(req);
-      res.json(await listWorkflows(repo, days));
+      const rows = await listWorkflows(repo, days);
+      res.json(rows.map(r => ({ text: r.workflow, value: r.workflow })));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -180,11 +184,11 @@ export function registerMetricsRoutes(getRouter, log) {
     }
   });
 
-  // Stats por workflow name (filtrable por repo)
+  // Stats por workflow name (filtrable por repo y workflow)
   router.get('/workflows/by-name', async (req, res) => {
     try {
-      const { days, repo } = parseWfParams(req);
-      res.json(await workflowsByName(repo, days));
+      const { days, repo, workflow } = parseWfParams(req);
+      res.json(await workflowsByName(repo, workflow, days));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
