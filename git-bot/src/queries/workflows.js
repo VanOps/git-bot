@@ -173,13 +173,14 @@ export async function workflowsByRepo(workflowName, days = 30) {
  * One row per workflow name. Optionally scoped to a single repo.
  * Returns [{workflow, total_runs, success_runs, failed_runs, success_rate_pct, avg_duration_min}]
  */
-export async function workflowsByName(repoName, days = 30) {
+export async function workflowsByName(repoName, workflowName, days = 30) {
   const match = {
     status:        'completed',
     completed_at:  { $gte: windowDays(days) },
     workflow_name: { $nin: [null, ''] },
   };
-  if (repoName) match.repo_full_name = repoName;
+  if (repoName)     match.repo_full_name = repoName;
+  if (workflowName) match.workflow_name  = workflowName;
 
   return CheckSuite.aggregate([
     { $match: match },
@@ -230,7 +231,16 @@ export async function workflowsOverTime(repoName, workflowName, days = 30) {
         failed:  { $sum: { $cond: [{ $in:  ['$conclusion', FAILED_CONCLUSIONS] }, 1, 0] } },
       },
     },
-    { $project: { _id: 0, date: '$_id', total: 1, success: 1, failed: 1 } },
+    {
+      $project: {
+        _id:     0,
+        date:    '$_id',
+        ts:      { $dateFromString: { dateString: '$_id' } },
+        total:   1,
+        success: 1,
+        failed:  1,
+      },
+    },
     { $sort: { date: 1 } },
   ]);
 }

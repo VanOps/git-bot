@@ -49,7 +49,8 @@
           "url": "http://probot:3000/metrics/workflows/repos?days=${days}",
           "root_selector": "",
           "columns": [
-            { "selector": "repo", "text": "repo", "type": "string" }
+            { "selector": "text",  "text": "__text",  "type": "string" },
+            { "selector": "value", "text": "__value", "type": "string" }
           ],
           "parser": "backend",
           "url_options": { "method": "GET", "data": "" },
@@ -57,7 +58,7 @@
         },
         "current": {},
         "options": [],
-        "refresh": 2,
+        "refresh": 1,
         "includeAll": true,
         "allValue": "",
         "multi": false,
@@ -80,7 +81,8 @@
           "url": "http://probot:3000/metrics/workflows/names?days=${days}&repo=${repo}",
           "root_selector": "",
           "columns": [
-            { "selector": "workflow", "text": "workflow", "type": "string" }
+            { "selector": "text",  "text": "__text",  "type": "string" },
+            { "selector": "value", "text": "__value", "type": "string" }
           ],
           "parser": "backend",
           "url_options": { "method": "GET", "data": "" },
@@ -88,7 +90,7 @@
         },
         "current": {},
         "options": [],
-        "refresh": 2,
+        "refresh": 1,
         "includeAll": true,
         "allValue": "",
         "multi": false,
@@ -536,7 +538,7 @@
           "refId": "A",
           "type": "json",
           "source": "url",
-          "url": "http://probot:3000/metrics/workflows/by-name?days=${days}&repo=${repo}",
+          "url": "http://probot:3000/metrics/workflows/by-name?days=${days}&repo=${repo}&workflow=${workflow}",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -635,7 +637,7 @@
           "refId": "A",
           "type": "json",
           "source": "url",
-          "url": "http://probot:3000/metrics/workflows/by-name?days=${days}&repo=${repo}",
+          "url": "http://probot:3000/metrics/workflows/by-name?days=${days}&repo=${repo}&workflow=${workflow}",
           "format": "table",
           "root_selector": "",
           "columns": [
@@ -664,8 +666,8 @@
     {
       "id": 11,
       "type": "timeseries",
-      "title": "Ejecuciones por día",
-      "description": "Evolución diaria del total de runs, exitosos y fallidos",
+      "title": "Evolución histórica: Éxitos vs Fracasos",
+      "description": "Tendencia diaria de ejecuciones exitosas y fallidas",
       "gridPos": { "x": 0, "y": 28, "w": 24, "h": 9 },
       "fieldConfig": {
         "defaults": {
@@ -682,13 +684,6 @@
           }
         },
         "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "total" },
-            "properties": [
-              { "id": "displayName", "value": "Total" },
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }
-            ]
-          },
           {
             "matcher": { "id": "byName", "options": "success" },
             "properties": [
@@ -711,10 +706,10 @@
       },
       "transformations": [
         {
-          "id": "convertFieldTypes",
+          "id": "convertFieldType",
           "options": {
             "conversions": [
-              { "fieldName": "date", "destinationType": "time" }
+              { "fieldName": "ts", "destinationType": "time" }
             ]
           }
         }
@@ -729,8 +724,7 @@
           "format": "table",
           "root_selector": "",
           "columns": [
-            { "selector": "date",    "text": "date",    "type": "string" },
-            { "selector": "total",   "text": "total",   "type": "number" },
+            { "selector": "ts",      "text": "ts",      "type": "timestamp" },
             { "selector": "success", "text": "success", "type": "number" },
             { "selector": "failed",  "text": "failed",  "type": "number" }
           ],
